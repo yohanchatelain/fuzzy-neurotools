@@ -1,0 +1,85 @@
+FROM centos:centos7.3.1611
+
+RUN yum update -y && yum install -y \
+    bc \
+    curl-devel \
+    epel-release \
+    expat-devel \
+    fontconfig.x86_64 \
+    freetype.x86_64 \
+    gettext-devel \
+    git \
+    libpng.x86_64 \
+    libpng12.x86_64 \
+    libSM.x86_64 \
+    libstdc++.x86_64 \
+    libXrender.x86_64 \
+    libXext.x86_64 \
+    openssl-devel \
+    perl-ExtUtils-MakeMaker \
+    tar \
+    unzip \
+    wget \
+    zlib-devel
+
+RUN rpm --rebuilddb ; \
+    yum clean all && yum install -y \
+    numpy.x86_64
+
+# Permit access to fsl installation script (must exist locally)
+# ADD ./myFslInstallerScript.sh /myFslInstallerScript.sh
+# https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.4-sources.tar.gz 
+
+RUN yum install -y which file mesa-libGL-devel 
+RUN cd /tmp/ &&\
+    wget https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-5.0.10-centos6_64.tar.gz -O fsl-5.0.10.tar &&\
+    tar xf fsl-5.0.10.tar -C /usr/local/src
+    # echo -e "/usr/local/src/fsl" | python fslinstaller.py
+
+# Install fsl to default dir
+# RUN echo -e "/usr/local/src" | ./myFslInstallerScript.sh 5.0.6 CentOS5 /usr/local/src /usr/local/etc/
+
+# Set environment variables (run export not needed)
+ENV FSLDIR=/usr/local/src/fsl \
+    FSLOUTPUTTYPE=NIFTI_GZ \
+    FSLGECUDAQ=cuda.q
+#    CARET7DIR=/usr/local/src/tools/workbench/
+ENV PATH=${FSLDIR}/bin:${PATH} \
+    FSLTCLSH=${FSLDIR}/bin/fsltclsh \
+    FSLWISH=${FSLDIR}/bin/fslwish
+ENV HOME=/usr/local/src
+
+RUN yum install -y python-pip vim
+# FSL analysis requirement
+COPY BIDSto3col.sh /bin/
+COPY requirements.txt /tmp/
+RUN pip install -r /tmp/requirements.txt
+ENV USER 1000
+
+
+# Install Verificarlo
+RUN yum group install "Development Tools" -y &&\
+    yum install -y python3 python3-devel centos-release-scl &&\
+    yum-config-manager --enable rhel-server-rhscl-7-rpms  &&\
+    yum install -y llvm-toolset-7 llvm-toolset-7-llvm-devel devtoolset-7-gcc*
+RUN printf "source scl_source enable devtoolset-7\nsource scl_source enable llvm-toolset-7\n" > /usr/bin/scl_enable
+ENV BASH_ENV=/usr/bin/scl_enable \
+    ENV=/usr/bin/scl_enable \
+    PROMPT_COMMAND=". /usr/bin/scl_enable"
+
+RUN pip3 install numpy pandas bigfloat
+
+RUN git clone https://github.com/verificarlo/verificarlo.git /opt/verificarlo/ &&\
+    cd /opt/verificarlo/ &&\
+    sed -i "s/print_information_header(ctx);/\/*print_information_header(ctx);*\//" src/backends/interflop-mca/interflop_mca.c &&\
+    sed -i "s/if (!silent_load)/if (silent_load)/" src/vfcwrapper/main.c &&\
+    ./autogen.sh &&\
+    ./configure --without-flang --with-llvm=/opt/rh/llvm-toolset-7/root/usr/bin/ CC=/opt/rh/devtoolset-7/root/usr/bin/gcc CXX=/opt/rh/devtoolset-7/root/usr/bin/g++ &&\
+    make &&\
+    make install
+
+# Install instrumented libmath
+RUN git clone https://github.com/big-data-lab-team/MCA-libmath.git /opt/mca-libmath/ &&\
+    cd /opt/mca-libmath/ &&\
+    make
+
