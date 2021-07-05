@@ -1,4 +1,4 @@
-FROM centos:centos7.3.1611
+FROM centos:centos7.2.1511
 
 RUN yum update -y && yum install -y \
     bc \
@@ -57,27 +57,27 @@ RUN pip install -r /tmp/requirements.txt
 ENV USER 1000
 
 
-# Install Verificarlo
-RUN yum group install "Development Tools" -y &&\
-    yum install -y python3 python3-devel centos-release-scl &&\
-    yum-config-manager --enable rhel-server-rhscl-7-rpms  &&\
-    yum install -y llvm-toolset-7 llvm-toolset-7-llvm-devel devtoolset-7-gcc*
-RUN printf "source scl_source enable devtoolset-7\nsource scl_source enable llvm-toolset-7\n" > /usr/bin/scl_enable
-ENV BASH_ENV=/usr/bin/scl_enable \
-    ENV=/usr/bin/scl_enable \
-    PROMPT_COMMAND=". /usr/bin/scl_enable"
+# # Install Verificarlo
+# RUN yum group install "Development Tools" -y &&\
+#     yum install -y python3 python3-devel centos-release-scl &&\
+#     yum-config-manager --enable rhel-server-rhscl-7-rpms  &&\
+#     yum install -y llvm-toolset-7 llvm-toolset-7-llvm-devel devtoolset-7-gcc*
+# RUN printf "source scl_source enable devtoolset-7\nsource scl_source enable llvm-toolset-7\n" > /usr/bin/scl_enable
+# ENV BASH_ENV=/usr/bin/scl_enable \
+#     ENV=/usr/bin/scl_enable \
+#     PROMPT_COMMAND=". /usr/bin/scl_enable"
 
-RUN pip3 install numpy pandas bigfloat
+# RUN pip3 install numpy pandas bigfloat
 
-RUN git clone https://github.com/verificarlo/verificarlo.git /opt/verificarlo/ &&\
-    cd /opt/verificarlo/ &&\
-    sed -i "s/print_information_header(ctx);/\/*print_information_header(ctx);*\//" src/backends/interflop-mca/interflop_mca.c &&\
-    sed -i "s/if (!silent_load)/if (silent_load)/" src/vfcwrapper/main.c &&\
-    ./autogen.sh &&\
-    ./configure --without-flang --with-llvm=/opt/rh/llvm-toolset-7/root/usr/bin/ CC=/opt/rh/devtoolset-7/root/usr/bin/gcc CXX=/opt/rh/devtoolset-7/root/usr/bin/g++ &&\
-    make &&\
-    make install
+# RUN git clone https://github.com/verificarlo/verificarlo.git /opt/verificarlo/ &&\
+#     cd /opt/verificarlo/ &&\
+#     sed -i "s/print_information_header(ctx);/\/*print_information_header(ctx);*\//" src/backends/interflop-mca/interflop_mca.c &&\
+#     sed -i "s/if (!silent_load)/if (silent_load)/" src/vfcwrapper/main.c &&\
+#     ./autogen.sh &&\
+#     ./configure --without-flang --with-llvm=/opt/rh/llvm-toolset-7/root/usr/bin/ CC=/opt/rh/devtoolset-7/root/usr/bin/gcc CXX=/opt/rh/devtoolset-7/root/usr/bin/g++ &&\
+#     make &&\
+#     make install
 
-# Install instrumented libmath
-RUN git clone https://github.com/big-data-lab-team/MCA-libmath.git /opt/mca-libmath/ &&\
-    (cd /opt/mca-libmath/ && make)
+# # Install instrumented libmath
+# RUN git clone https://github.com/big-data-lab-team/MCA-libmath.git /opt/mca-libmath/ &&\
+#     (cd /opt/mca-libmath/ && make)

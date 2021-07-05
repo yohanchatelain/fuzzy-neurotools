@@ -81,3 +81,40 @@ RUN git clone https://github.com/verificarlo/verificarlo.git /opt/verificarlo/ &
 # Install instrumented libmath
 RUN git clone https://github.com/big-data-lab-team/MCA-libmath.git /opt/mca-libmath/ &&\
     (cd /opt/mca-libmath/ && make)
+
+
+################### SPM ###################################
+
+# Matlab (R2016b) installation 
+# Instalation files are downloaded into matlab-install-R2016b
+ADD matlab-install-R2016b /matlab-install/
+ADD matlab_installer_input_R2016b.txt /matlab_installer_input.txt
+
+RUN yum install -y libXtst libXtst-devel libXt libXt-devel \
+                   libXrandr libXrandr-devel libGLU libGLU-devel
+# Now install MATLAB (make sure that the install script is executable)
+RUN cd /matlab-install && \
+    chmod +x ./install && \
+    ./install -mode silent \
+        -inputFile /matlab_installer_input.txt \
+        -outputFile /tmp/mlinstall.log \
+        -destinationFolder /usr/local/MATLAB \
+    ; EXIT=$? && cat /tmp/mlinstall.log && test $EXIT -eq 0
+
+RUN cd /matlab-install &&\
+    ./R2016b_Update_7_glnxa64.sh
+
+RUN  ln -s /usr/local/MATLAB/bin/matlab /usr/local/bin/matlab
+#ADD license_R2016b.lic /usr/local/MATLAB/licenses/license.lic
+
+# Install SPM12 v7771 vs v6906
+RUN  mkdir /opt/spm12 &&\
+     curl -SL https://github.com/spm/spm12/archive/r6906.tar.gz \
+     | tar -xzC /opt/spm12 --strip-components 1
+
+ENV PATH=/usr/local/MATLAB/bin:$PATH
+RUN cd /usr/local/bin &&\
+    ln -s /usr/local/MATLAB/bin/mex
+RUN cd /opt/spm12/src &&\
+    make distclean &&\
+    make && make install

@@ -84,20 +84,24 @@ RUN git clone https://github.com/big-data-lab-team/MCA-libmath.git /opt/mca-libm
 
 
 ################### SPM ###################################
-# Install octave version 5.2.0
+
+# Install Octave version 5.2.0
 RUN wget http://springdale.princeton.edu/data/springdale/7/x86_64/os/Computational/octave-5.2.0-1.sdl7.x86_64.rpm -P /opt/ &&\
     wget http://springdale.princeton.edu/data/springdale/7/x86_64/os/Computational/octave-devel-5.2.0-1.sdl7.x86_64.rpm -P /opt/ &&\
     yum install -y /opt/octave-5.2.0-1.sdl7.x86_64.rpm \
                    /opt/octave-devel-5.2.0-1.sdl7.x86_64.rpm
-# In modified script we added "dir = fileparts (gzfile{1});"" in line 48
+# gunzip.m: add "dir = fileparts (gzfile{1});" in line 48
 COPY gunzip.m /usr/share/octave/5.2.0/m/miscellaneous/gunzip.m
+# Install Octave 4.2.0
+# RUN wget https://mirror.its.dal.ca/gnu/octave/octave-4.2.0.tar.gz &&\
+#     tar -xf octave-4.2.0.tar.gz &&\
+#     (cd octave-4.2.0 && ./cinf && make && make install)
 
-# Install SPM12 v7771
+# Install SPM12 v7771 vs v6906
 RUN  mkdir /opt/spm12 &&\
      curl -SL https://github.com/spm/spm12/archive/r7771.tar.gz \
      | tar -xzC /opt/spm12 --strip-components 1
-
-# In modified script we replaced "AR = gcc-ar rcs" in line 36
+# Makefile.var: replace "AR = gcc-ar rcs" in line 36
 COPY Makefile.var /opt/spm12/src/Makefile.var
 RUN  make -C /opt/spm12/src PLATFORM=octave distclean &&\
      make -C /opt/spm12/src PLATFORM=octave &&\
@@ -106,5 +110,10 @@ RUN  make -C /opt/spm12/src PLATFORM=octave distclean &&\
 
 # Install Snpm13 latest version
 RUN git clone https://github.com/SnPM-toolbox/SnPM-devel.git /opt/spm12/toolbox/SnPM13
-# In modified script we converted str2mat (depricated) to char
+# snpm_ui.m: convert str2mat (depricated) to char function
 COPY snpm_ui.m /opt/spm12/toolbox/SnPM13/snpm_ui.m
+# snpm_cp.m: replace "SnPMcfg" in line 211
+# COPY snpm_cp.m /opt/spm12/toolbox/SnPM13/snpm_cp.m
+
+# RUN CMD:
+# octave --no-gui --eval "addpath ('/opt/spm12'); addpath ('/opt/spm12/src/'); addpath('/home/Ali/Desktop/git_repo/fuzzy-neurotools/test-running/Software_Comparison/scripts'); addpath(fullfile('/home/Ali/Desktop/git_repo/fuzzy-neurotools/test-running/Software_Comparison/scripts', 'lib')); process_ds001_SPM"
