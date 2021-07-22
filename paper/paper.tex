@@ -1,0 +1,189 @@
+% This is samplepaper.tex, a sample chapter demonstrating the
+% LLNCS macro package for Springer Computer Science proceedings;
+% Version 2.20 of 2017/10/04
+%
+\documentclass[runningheads]{llncs}
+\renewcommand{\baselinestretch}{1.1} 
+%
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{xspace}
+\usepackage{hyperref}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{ulem}
+% \usepackage{geometry}
+% \usepackage{marginnote}
+
+% Fix link colors
+\hypersetup{
+    colorlinks = true,
+    linkcolor=red,
+    citecolor=red,
+    urlcolor=blue,
+    linktocpage % so that page numbers are clickable in toc
+}
+
+% Used for displaying a sample figure. If possible, figure files should
+% be included in EPS format.
+%
+% If you use the hyperref package, please uncomment the following line
+% to display URLs in blue roman font according to Springer's eBook style:
+% \renewcommand\UrlFont{\color{blue}\rmfamily}
+\newcommand{\TG}[1]{\noindent{\color{blue}[\textsc{From Tristan:} #1]}\xspace}
+\newcommand{\Ali}[1]{\noindent{\color{green}[\textsc{From Ali:} #1]}\xspace}
+\newcommand{\GK}[1]{\noindent{\color{purple}[\textsc{From Greg:} #1]}\xspace}
+\newcommand{\YC}[1]{\noindent{\color{orange}[\textsc{From Yohan:} #1]}\xspace}
+\newcommand{\anonymous}[1]{***\xspace}
+
+
+\lstdefinestyle{customC}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  xleftmargin=\parindent,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\scriptsize\ttfamily,
+  keywordstyle=\bfseries\color[rgb]{0.580, 0.000, 0.827},
+  %{purple!40!lightgray},
+  commentstyle=\textit{\color{green!40!black}},
+  identifierstyle=\bfseries\color{cyan!75!black},
+  stringstyle=\color{orange},
+  deletekeywords={double,float},
+  classoffset=1, % starting new class
+  otherkeywords={double,float},
+  morekeywords={double,float},
+  keywordstyle=\bfseries\color{green!55!black},
+  classoffset=0
+}
+
+\begin{document}
+
+\title{Comparing tool variability and numerical variability in fMRI analyses}
+
+\author{Ali Salari$^1$, Co-authors$^2$, Tristan Glatard$^1$}
+
+\authorrunning{Salari et al.}
+% First names are abbreviated in the running head.
+% If there are more than two authors, 'et al.' is used.
+
+\institute{$^1$ Anonymous Organization1\\
+  $^2$ Anonymous Organization2\\ **@******.***}
+
+\institute{$^1$ Department of Computer Science and Software Engineering, Concordia University\\
+  $^2$ Co-authors Organization\\  Montréal, QC, Canada}
+
+\maketitle              % typeset the header of the contribution
+
+\begin{abstract}
+abstract\dots
+
+%  \keywords{Computational reproducibility  \and Neuroimaging pipelines \and Monte-Carlo arithmetic.}
+\end{abstract}
+
+
+\section{Introduction}
+
+\begin{description}
+  \item[$\bullet$ ] Methodological choice can influence the final determining areas of brain activation. This opens so results flexibility~\cite{bowring2019exploring}. 
+
+  \item[$\bullet$ ] We presented a framework that can investigate the numerical instability of the pipelines based on Monte-Carlo arithmetic
+                    by creating a Fuzzy environment, so that instrument mathematical functions implemented in mathematical system libraries (libmath). 
+
+  \item[$\bullet$ ] In this paper, we aim to answer the questions 1) how the fMRI analyses are numerically stable?
+                    2) how the numerical variability is in comparison with the tool variability?
+\end{description} 
+
+
+\section{Methodology}
+
+\subsection{libmath Fuzzy System}
+
+\begin{description}
+  \item[$\bullet$ ] libmath Fuzzy allows you to study the numerical stability of tools and pipelines. 
+  \item[$\bullet$ ] It is based on MCA perturbations so that applies slight noise on floating-point operations.
+  \item[$\bullet$ ] It does not need source code modification or recompilation, and simply works using the Linux LD\_PRELOAD environment variable.
+  \item[$\bullet$ ] The library call interposition technique enables us to assess the tools that are dynamically linked to the mathematical library.
+\end{description} 
+
+
+\subsection{fMRI analyses \& Dataset}
+
+\begin{description}
+  \item[$\bullet$ ] We replicate the fMRI analyses used in~\cite{bowring2019exploring} using the three most popular packages 
+                    for fMRI data processing including FSL, AFNI, and SPM. 
+                    
+  \item[$\bullet$ ] The functional fMRI studies have been chosen for reanalysis with the publicly available data repositories.
+                    The used dataset is available at https://openneuro.org/datasets/ds000001.
+
+  \item[$\bullet$ ] For the ds000001 study, 16 healthy adult subjects participated in a balloon analogue risk task over three scanning sessions.
+                    This analysis consists of several common processes. A full description of each analysis is included in~\cite{bowring2019exploring}.
+
+  \item[$\bullet$ ] In the original study, a number of preprocessing steps such as motion correction, segmentation, brain extraction, and registration 
+                    were applied in all of the analyses to ensure that results from each software package could be compared objectively.
+  
+\end{description}  
+
+
+\subsection{Data processing}
+
+\begin{description}
+  \item[$\bullet$ Containerization] building Docker images for three of the most popular software packages in neuroimaging including FSL, AFNI, and SPM.
+                  We ensured that the software versions and all the requisites for running analyses used in all experiments 
+                  are identical to the original study.  
+
+  \item[$\bullet$ Between tool variability] check and confirm that obtained results are perfectly replicated comparing to the original study. 
+
+  \item[$\bullet$ Numerical variability] running 3 MCA samples in each condition using the Fuzzy libmath environment. 
+                  The conditions could be varying between tools, software versions, or the instrumented precisions. 
+    \begin{description}
+      \item[$\ast$ Varying precisions] a) only perturbing maximum precisions (OS-level), p=53 bits for double-precision and p=24 bits for single-precision.
+                                       This would help to compare uncertainty between tool variability and numerical instability at the OS-level. 
+                                       b) perturbing precisions from p=53 bits to p=1 bits by steps of 2 iteratively. 
+                                       This would help to find the most similar uncertainty distribution between tool variability and numerical variability.
+    \end{description}
+    
+  \item[$\bullet$ Image types] the fMRI result images that we are investigating are thresholded and unthresholded of the group level activation maps.
+
+  \item[$\bullet$ Comparison metrics] comparing variabilities statistically by computing correlations between T-statistic values, Dice coefficient, 
+                  and the number of significant digits.    
+
+  \item[$\bullet$ Configuration table] showing the detail of the configurations used for replicating the fMRI results.
+\end{description}
+
+
+\section{Results}
+
+\begin{description}
+  \item[$\bullet$ Figure 1: Showing results visually] make an overlay of 3 samples of un/thresholded activations maps for each condition.
+
+  \item[$\bullet$ Table 1: Summary of statistics] mean differences and correlations between T-statistic values for each pair of results in each condition.
+
+  \item[$\bullet$ Figure 2: Bland-Altman] comparing unthresholded group level maps, 2D histogram, computed each pair of tools in both conditions.
+                  Measures similarity between statistic values.
+                  This plots difference between the statistic values (y-axis) and the mean statistic value (x-axis) for all voxels.
+
+  \item[$\bullet$ Figure 3: Dice Coefficient] comparing the thresholded group level maps computed each pair of tools in both conditions.
+                  Measures the overlap of voxels which assess the spatial similarity between activated maps. 
+
+  \item[$\bullet$ Figure 4: Significant digits] comparing the distribution of SD across 3 samples (unthresholded images) for each condition. 
+                  Find and show results at the precision that creates the most similar numerical uncertainty with between tool variability.  
+\end{description}
+
+% EC is a means to assess whether only superficial scaling differences (differences by a scale factor over all voxels) 
+% are responsible for disparities between pair of images.
+
+
+
+\section{Conclusion \& Discussion}
+conclusions\dots
+%
+% ---- Bibliography ----
+%
+% BibTeX users should specify bibliography style 'splncs04'.
+% References will then be sorted and formatted in the correct style.
+%
+\bibliographystyle{splncs04}
+\bibliography{biblio}
+
+\end{document}
