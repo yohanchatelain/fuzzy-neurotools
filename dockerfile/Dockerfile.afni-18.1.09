@@ -1,0 +1,89 @@
+FROM centos:centos7.3.1611
+
+ENTRYPOINT /bin/tcsh
+
+# Install AFNI version 18.1.09
+RUN yum update -y &&\
+    yum install -y epel-release &&\
+    yum install -y tcsh libXp openmotif gsl xorg-x11-fonts-misc      \
+                   PyQt4 R-devel netpbm-progs gnome-tweak-tool ed    \
+                   libpng12 xorg-x11-server-Xvfb firefox             \
+                   mesa-libGLw mesa-libGLU mesa-libGLU-devel wget    \
+                   libXt-devel libXext-devel libXmu-devel            \
+                   libXpm-devel libjpeg-devel gsl-devel \
+                   glut glut-devel \
+                   xorg-x11-drv-vesa xorg-x11-drv-fbdev xorg-x11-drv-libinput \
+                   python-devel mesa-libGLw-devel glib glib-devel libXi-devel glib*
+
+RUN cp /lib64/glib/include/glibconfig.h /usr/include/glib-1.2/
+RUN yum groupinstall 'Development Tools' -y              &&\
+    yum update -y \
+    yum clean all && rm -rf /var/cache/yum/*
+
+ENV HOME=/usr/local/src/
+RUN cd $HOME &&\
+    wget https://github.com/afni/afni/archive/refs/tags/AFNI_18.1.09.tar.gz -O AFNI_18.1.09.tar &&\
+    tar xf AFNI_18.1.09.tar
+RUN cd $HOME/afni-AFNI_18.1.09/src/ &&\
+    cp Makefile.linux_centos_7_64 Makefile &&\
+    make totality
+RUN mv $HOME/afni-AFNI_18.1.09/src/linux_centos_7_64 $HOME/abin &&\
+    rm -r $HOME/AFNI_18.1.09.tar $HOME/afni-AFNI_18.1.09 &&\
+    cp $HOME/abin/AFNI.afnirc /usr/local/src/.afnirc
+ENV PATH=$PATH:${HOME}/abin/
+RUN suma -update_env
+
+# Download templates
+RUN wget -r https://afni.nimh.nih.gov/pub/dist/bin/linux_fedora_25_64/ -P $HOME/ &&\
+    mv $HOME/afni.nimh.nih.gov/pub/dist/bin/linux_fedora_25_64/* $HOME/abin/
+
+# Install R dependencies
+RUN yum install -y nlopt-devel libcurl-devel openssl-devel \
+    libxml2-devel v8-devel
+
+ENV R_LIBS=$HOME/R
+RUN mkdir  $R_LIBS  &&\
+    echo  'export R_LIBS=$HOME/R' >> ~/.bashrc  &&\
+    echo  'setenv R_LIBS ~/R'     >> ~/.cshrc  &&\
+    /bin/tcsh -c "source ~/.cshrc"
+RUN rPkgsInstall -pkgs ALL
+RUN R -e "install.packages ('phia', dependencies=TRUE, repos='http://cran.rstudio.com/')" &&\
+    R -e "install.packages ('afex', dependencies=TRUE, repos='http://cran.rstudio.com/')" &&\
+    R -e "install.packages ('snow', dependencies=TRUE, repos='http://cran.rstudio.com/')" &&\
+    R -e "install.packages ('paran', dependencies=TRUE, repos='http://cran.rstudio.com/')" &&\
+    R -e "install.packages ('psych', dependencies=TRUE, repos='http://cran.rstudio.com/')" &&\
+    R -e "install.packages ('brms', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+
+RUN apsearch -update_all_afni_help
+
+# Install analysis requirements
+RUN yum -y install python-pip
+COPY requirements.txt /opt/
+RUN pip install -r /opt/requirements.txt
+COPY BIDSto3col.sh /bin/
+COPY 3coltoAFNI.sh /bin/
+
+# Install Verificarlo
+RUN yum install -y python3 python3-devel centos-release-scl &&\
+    yum-config-manager --enable rhel-server-rhscl-7-rpms  &&\
+    yum install -y llvm-toolset-7 llvm-toolset-7-llvm-devel devtoolset-7-gcc*
+RUN printf "source scl_source enable devtoolset-7\nsource scl_source enable llvm-toolset-7\n" > /usr/bin/scl_enable
+ENV BASH_ENV=/usr/bin/scl_enable \
+    ENV=/usr/bin/scl_enable \
+    PROMPT_COMMAND=". /usr/bin/scl_enable"
+# RUN strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5
+RUN pip3 install numpy pandas bigfloat tables \
+                 scipy gitpython jinja2 bokeh
+
+RUN git clone https://github.com/verificarlo/verificarlo.git /opt/verificarlo/ &&\
+    cd /opt/verificarlo/ &&\
+    sed -i "s/print_information_header(ctx);/\/*print_information_header(ctx);*\//" src/backends/interflop-mca/interflop_mca.c &&\
+    sed -i "s/if (\!silent_load)/if (silent_load)/" src/vfcwrapper/main.c &&\
+    ./autogen.sh &&\
+    ./configure --without-flang --with-llvm=/opt/rh/llvm-toolset-7/root/usr/bin/ CC=/opt/rh/devtoolset-7/root/usr/bin/gcc CXX=/opt/rh/devtoolset-7/root/usr/bin/g++ &&\
+    (make && make install)
+
+# Install instrumented libmath
+RUN git clone https://github.com/big-data-lab-team/MCA-libmath.git /opt/mca-libmath/ &&\
+    (cd /opt/mca-libmath/ && make)
+

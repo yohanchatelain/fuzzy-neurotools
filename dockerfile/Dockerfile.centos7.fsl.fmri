@@ -1,5 +1,7 @@
 FROM centos:centos7.2.1511
 
+# for the purpose of between OS variability
+
 RUN yum update -y && yum install -y \
     bc \
     curl-devel \
