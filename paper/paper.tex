@@ -6,12 +6,16 @@
 \renewcommand{\baselinestretch}{1.1} 
 %
 \usepackage{graphicx}
-\usepackage{xcolor}
+\usepackage[table]{xcolor}
 \usepackage{xspace}
 \usepackage{hyperref}
 \usepackage{subcaption}
 \usepackage{listings}
 \usepackage{ulem}
+
+\usepackage[para,online,flushleft]{threeparttable}
+\usepackage{booktabs}
+\usepackage{multirow}
 % \usepackage{geometry}
 % \usepackage{marginnote}
 
@@ -147,6 +151,8 @@ abstract\dots
 
   \item[$\bullet$ Comparison metrics] comparing variabilities statistically by computing correlations between T-statistic values, Dice coefficient, 
                   and the number of significant digits.    
+% EC is a means to assess whether only superficial scaling differences (differences by a scale factor over all voxels) 
+% are responsible for disparities between pair of images.
 
   \item[$\bullet$ Configuration table] showing the detail of the configurations used for replicating the fMRI results.
 \end{description}
@@ -154,25 +160,185 @@ abstract\dots
 
 \section{Results}
 
+
+% \subsection{Comparing between tool and numerical variability}
 \begin{description}
-  \item[$\bullet$ Figure 1: Showing results visually] make an overlay of 3 samples of un/thresholded activations maps for each condition.
+  \item[$\bullet$ Table 1: Summary of statistics] mean and standard deviation of the differences, and correlations 
+                  between t-statistic values for each pair of results in each condition.
 
-  \item[$\bullet$ Table 1: Summary of statistics] mean differences and correlations between T-statistic values for each pair of results in each condition.
+  \item[$\bullet$ Figure 1 and 2: Surface maps of std.] comparing standard deviations on surface map template (ICBM-152)
+                  computed between pair of software (tool variation), and different Fuzzy samples on each software (numerical variation).
+                  Figure 1 shows results for group level thresholded t-statistics, and 
+                  Figure 2 shows maps for group level unthresholded t values. The numerical variation 
 
-  \item[$\bullet$ Figure 2: Bland-Altman] comparing unthresholded group level maps, 2D histogram, computed each pair of tools in both conditions.
-                  Measures similarity between statistic values.
-                  This plots difference between the statistic values (y-axis) and the mean statistic value (x-axis) for all voxels.
+  \item[$\bullet$ Figure 3 and 4: Dice Coefficients] comparing region-by-region Dice coefficients of group level thresholded maps between tools.
+                  This measures the overlap of voxels which assess the spatial similarity between activated maps.
+                  In bewteen tool similarity, the Dice values correspond to the mean of Dices computed for each pair of that specific tool,
+                  for example, Dice value for SPM is calculated by averaging Dices in SPM-AFNI and SPM-FSL pairs.
+                  Similarly, Dice values are computed between three Fuzzy samples obtained from each tool in numerical variation.
+                  Figure 3 shows bar plots of Dices for negative and positive activated regions.
+                  Figure 4 shows surface maps of Dices for the activated regions.
 
-  \item[$\bullet$ Figure 3: Dice Coefficient] comparing the thresholded group level maps computed each pair of tools in both conditions.
-                  Measures the overlap of voxels which assess the spatial similarity between activated maps. 
+  % \item[$\bullet$ Figure 2: Bland-Altman] comparing unthresholded group level maps, 2D histogram, computed each pair of tools in both conditions.
+  % Measures similarity between statistic values.
+  % This plots difference between the statistic values (y-axis) and the mean statistic value (x-axis) for all voxels.
 
-  \item[$\bullet$ Figure 4: Significant digits] comparing the distribution of SD across 3 samples (unthresholded images) for each condition. 
-                  Find and show results at the precision that creates the most similar numerical uncertainty with between tool variability.  
+  % \item[$\bullet$ Figure 4: Significant digits] comparing the distribution of SD across 3 samples (unthresholded images) for each condition. 
+  %                 Find and show results at the precision that creates the most similar numerical uncertainty with between tool variability.  
+
 \end{description}
 
-% EC is a means to assess whether only superficial scaling differences (differences by a scale factor over all voxels) 
-% are responsible for disparities between pair of images.
 
+%%%%%%%%%% Summary of statstics %%%%%%%%
+\setlength{\tabcolsep}{10pt}
+\begin{table}[h]
+    \centering
+    \begin{tabular}{cccc|ccc}
+        \toprule
+        \multirow{2}{*}{} & \multicolumn{3}{c}{Thresholded} & \multicolumn{3}{c}{Unthresholded} \\
+        \cmidrule{2-4} \cmidrule{5-7} \\
+        {} & Mean diff. & Std. diff. & Corr. & Mean diff. & Std. diff. & Corr.  \\
+        \midrule
+        \rowcolor{lightgray}
+        FSL vs. SPM          &  0.00       & 0.00      & 0.00       & 0.00     & 0.00       & 0.00 \\
+        \rowcolor{lightgray}
+        FSL vs. AFNI         &  0.00       & 0.00      & 0.00       & 0.00     & 0.00       & 0.00 \\
+        \rowcolor{lightgray}
+        AFNI vs. SPM         &  0.00       & 0.00      & 0.00       & 0.00     & 0.00       & 0.00 \\
+        Fuzzy SPM            &  0.00       & 0.00      & 0.00       & 0.00     & 0.00       & 0.00 \\
+        Fuzzy FSL            &  0.00       & 0.00      & 0.00       & 0.00     & 0.00       & 0.00 \\
+        Fuzzy AFNI           &  0.00       & 0.00      & 0.00       & 0.00     & 0.00       & 0.00 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Summary of t-statistics mean and standard deviation of differences and correlations of each pair of tools.}
+    \label{table:pipeline-stats}
+\end{table}
+
+
+%%%%%%%%%% STD. of Thresh %%%%%%%%
+\begin{figure}[b]
+  \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
+  \begin{subfigure}[t]{\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/maps-on-surf-thresh(std).pdf}
+    %\caption{Standard deviation of thresholded t-statistics map on template surface}
+    \label{fig:thresh-stdmaps1}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/maps-on-surf-mca-thresh(std).pdf}
+    %\caption{Standard deviation of thresholded t-statistics map on template surface}
+    \label{fig:thresh-stdmaps2}
+  \end{subfigure}
+  \caption{Surface maps of standard deviation of thresholded t-statistics.}
+  \label{fig:thresh-stdmaps}
+  \end{minipage}}
+\end{figure}
+
+%%%%%%%%%% STD. of Unthresh %%%%%%%%
+\begin{figure}[b]
+  \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
+  \begin{subfigure}[t]{\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/maps-on-surf-unthresh-tool(std).pdf}
+    %\caption{Standard deviation of thresholded t-statistics map on template surface}
+    \label{fig:thresh-stdmaps1}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/maps-on-surf-unthresh-mca1(std).pdf}
+    %\caption{Standard deviation of thresholded t-statistics map on template surface}
+    \label{fig:thresh-stdmaps2}
+  \end{subfigure}
+  \caption{Surface maps of standard deviation of unthresholded t-statistics.}
+  \label{fig:thresh-stdmaps}
+  \end{minipage}}
+\end{figure}
+
+
+%%%%%%%%%% Bar plots of Dices from Thresh %%%%%%%%
+\begin{figure}[b]
+  \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
+
+      \begin{subfigure}[t]{0.5\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/spm-exc_set_file.png}
+        \label{fig:fsl-dices}
+      \end{subfigure}
+      \hfill
+      \begin{subfigure}[t]{0.5\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/spm-exc_set_file_neg.png}
+        \label{fig:spm-dices}
+      \end{subfigure}    
+  \hfill
+    \begin{subfigure}[t]{0.5\linewidth}
+      \centering
+      \includegraphics[width=\linewidth]{figures/fsl-exc_set_file.png}
+      \label{fig:fsl-dices}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.5\linewidth}
+      \centering
+      \includegraphics[width=\linewidth]{figures/fsl-exc_set_file_neg.png}
+      \label{fig:spm-dices}
+    \end{subfigure}  
+  \hfill
+    \begin{subfigure}[t]{0.5\linewidth}
+      \centering
+      \includegraphics[width=\linewidth]{figures/afni-exc_set_file.png}
+      \label{fig:fsl-dices}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.5\linewidth}
+      \centering
+      \includegraphics[width=\linewidth]{figures/afni-exc_set_file_neg.png}
+      \label{fig:spm-dices}
+    \end{subfigure}
+  
+  \caption{Bar plots of Dice coefficients of activated regions between pair of tools (BT) and fuzzy samples (FL) from the thresholded t-statistics.
+  Right plots show the negative maps, and left plots show the positive maps. 
+  Region numbers correspond to the 180 areas of cortical parcellation (HCP-MMP1.0)~\cite{Glasser-nature}.}
+  \label{fig:unthresh-dices}
+  \end{minipage}}
+\end{figure}
+
+
+%%%%%%%%%% Surf maps of Dices from Thresh %%%%%%%%
+\begin{figure}[b]
+  \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
+  \begin{subfigure}[t]{\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/maps-on-surf-SPM(dice).pdf}
+    %\caption{Standard deviation of thresholded t-statistics map on template surface}
+    \label{fig:thresh-stdmaps1}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/maps-on-surf-FSL(dice).pdf}
+    %\caption{Standard deviation of thresholded t-statistics map on template surface}
+    \label{fig:thresh-stdmaps1}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/maps-on-surf-AFNI(dice).pdf}
+    %\caption{Standard deviation of thresholded t-statistics map on template surface}
+    \label{fig:thresh-stdmaps2}
+  \end{subfigure}
+  \caption{Surface maps of Dice coefficients of thresholded t-statistics region-by-region.}
+  \label{fig:unthresh-dices}
+  \end{minipage}}
+\end{figure}
+
+
+% \subsection{The precision that Fuzzy FSL tool can simulate the between tool variations}
+% \begin{description}
+%   \item[$\bullet$ Figure 5:] Repeat Fig 1-4 for the results of Fuzzy FSL on the precision that simulate mostly betwen tool varions.
+% \end{description}
 
 
 \section{Conclusion \& Discussion}
