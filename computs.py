@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from nibabel.processing import resample_from_to
 import scipy
 import scipy.spatial
@@ -11,7 +13,7 @@ import pickle as pkl
 import inspect
 import os
 from nilearn.image import math_img
-import seaborn as sns
+#import seaborn as sns
 import pandas as pd
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from lib import bland_altman
@@ -24,32 +26,33 @@ from statistics import mean
 def compute_var(f1, f2, file_name, f3=None):
     # Compute std. between tool image samples
     f1 = nib.load(f1)
-    #f1_mask = set_zero_to_nan(f1)
     f2 = nib.load(f2)
-    #f2_mask = set_zero_to_nan(f2)
-    #bg_ = np.logical_and(np.isnan(f1_mask.get_fdata()), np.isnan(f2_mask.get_fdata()))
     img_concat = nib.funcs.concat_images([f1, f2], check_affines=True, axis=None)
     img_std = np.std(img_concat.get_fdata(), axis=3)
+    # Extract background
+    # f1_mask = set_zero_to_nan(f1)
+    # f2_mask = set_zero_to_nan(f2)
+    # bg_ = np.logical_and(np.isnan(f1_mask.get_fdata()), np.isnan(f2_mask.get_fdata()))
 
     # Compute variance between fuzzy image samples
     if f3 is not None:
-        f3 = nib.load(f3)
-        #f3_mask = set_zero_to_nan(f3)
-        #bg_ = np.logical_and(np.isnan(f1_mask.get_fdata()), np.isnan(f2_mask.get_fdata()), np.isnan(f3_mask.get_fdata()))
+        # f3 = nib.load(f3)
+        # f3_mask = set_zero_to_nan(f3)
+        # bg_ = np.logical_and(np.isnan(f1_mask.get_fdata()), np.isnan(f2_mask.get_fdata()), np.isnan(f3_mask.get_fdata()))
         img_concat = nib.funcs.concat_images([f1, f2, f3], check_affines=True, axis=None)
         img_var = np.var(img_concat.get_fdata(), axis=3)
         # set background voxels as nan to not display later
-        #img_var[bg_] = np.nan
+        # img_var[bg_] = np.nan
         nft_img = nib.Nifti1Image(img_var, f1.affine, header=f1.header)
         nib.save(nft_img, './figures/map-on-surf/std/{}-var.nii.gz'.format(file_name))
         img_std = np.std(img_concat.get_fdata(), axis=3)
 
     img_std[img_std == 0] = np.nan
-    mean_ = np.nanmean(img_std)
-    print('mean of {} is {}'.format(file_name, mean_))
-    #img_std = np.log10(img_std)
     # set background voxels as nan to not display later
     # img_std[bg_] = np.nan
+    # mean_ = np.nanmean(img_std)
+    # print('mean of {} is {}'.format(file_name, mean_))
+
     nft_img = nib.Nifti1Image(img_std, f1.affine, header=f1.header)
     nib.save(nft_img, './figures/map-on-surf/std/{}-std.nii.gz'.format(file_name))
 
@@ -64,12 +67,10 @@ def combine_var(f1, f2, file_name):
     combine_var = np.nan_to_num(var_f1.get_fdata()) + np.nan_to_num(var_f2_res.get_fdata())
     std_ = np.sqrt(combine_var)
     std_[std_ == 0] = np.nan
-    mean_ = np.nanmean(std_)
-    print('mean of {} is {}'.format(file_name, mean_))
-
-    #std_ = np.log10(std_)
-    #colls = np.where((std_ > 0.5) & (std_ < 1.0))
     #std_[bg_] = np.nan
+    # mean_ = np.nanmean(std_)
+    # print('mean of {} is {}'.format(file_name, mean_))
+
     nft_img = nib.Nifti1Image(std_, var_f1.affine, header=var_f1.header)
     nib.save(nft_img, './figures/map-on-surf/std/{}-std.nii.gz'.format(file_name))
 
@@ -177,6 +178,15 @@ def get_ratio():
             nft_img = nib.Nifti1Image(ratio_, img1_.affine, header=img1_.header)
             nib.save(nft_img, './figures/map-on-surf/std/ratio-{}-{}.nii.gz'.format(pair_, type_))
 
+            # img1_data[img1_data < 0.1] = 0
+            # img2_data[img2_data < 0.1] = 0
+            # thresh_ratio = img1_data / img2_data
+            # #ones_ratio = np.where((0.1<thresh_ratio) & (thresh_ratio< 2) , 1, np.nan)
+            # thresh_ratio[thresh_ratio > 2] = 0
+            # thresh_ratio[thresh_ratio < 0.1] = 0
+            # nft_img = nib.Nifti1Image(thresh_ratio, img1_.affine, header=img1_.header)
+            # nib.save(nft_img, './figures/map-on-surf/std/ratioT-{}-{}.nii.gz'.format(pair_, type_))
+
 
 def resample_imgs(f1, f2):
     # Resample data1 on data2 using nearest neighbours
@@ -197,11 +207,11 @@ def cluster_std(bt_, wt_, img_f1, tool_, type_):
     wt_ = np.nan_to_num(wt_)
 
     # Upper maps
-    bt_class1 = np.where((bt_<0.1), bt_, np.nan)# & (wt_>3))
+    bt_class1 = np.where((bt_<0.005), bt_, np.nan)# & (wt_>3))
     bt_data1 = np.reshape(bt_class1, -1)
-    wt_class1 = np.where((bt_<0.1), wt_, np.nan)# & (wt_>3))
+    wt_class1 = np.where((bt_<0.005), wt_, np.nan)# & (wt_>3))
     wt_data1 = np.reshape(wt_class1, -1)
-    upper_map = np.where((bt_<0.1), O, np.nan)# & (wt_>3))
+    upper_map = np.where((bt_<0.005), O, np.nan)# & (wt_>3))
     img_d_img = nib.Nifti1Image(upper_map, img_f1.affine, header=img_f1.header)
     nib.save(img_d_img, './figures/map-on-surf/std/clusters/upper-maps-{}-{}.nii.gz'.format(type_, tool_))
 
@@ -215,15 +225,22 @@ def cluster_std(bt_, wt_, img_f1, tool_, type_):
     nib.save(img_d_img, './figures/map-on-surf/std/clusters/lower-maps-{}-{}.nii.gz'.format(type_, tool_))
 
     # Correlated maps
-    bt_class3 = np.where((0.9<wt_/bt_) & (wt_/bt_< 1.1) & (wt_ > 0.5) & (bt_ > 0.5), bt_, np.nan)#
+    # (0.5<bt_/wt_) & (bt_/wt_< 2) & (wt_ > 0.1) & (bt_ > 0.1)
+    bt_class3 = np.where((0.5<bt_/wt_) & (bt_/wt_< 2) & (wt_ > 0.1) & (bt_ > 0.1), bt_, np.nan)#
     bt_data3 = np.reshape(bt_class3, -1)
-    wt_class3 = np.where((0.9<wt_/bt_) & (wt_/bt_< 1.1) & (wt_ > 0.5) & (bt_ > 0.5), wt_, np.nan)#
+    wt_class3 = np.where((0.5<bt_/wt_) & (bt_/wt_< 2) & (wt_ > 0.1) & (bt_ > 0.1), wt_, np.nan)#
     wt_data3 = np.reshape(wt_class3, -1)
-    corr_map = np.where((0.9<wt_/bt_) & (wt_/bt_< 1.1) & (wt_ > 0.5) & (bt_ > 0.5), wt_/bt_, np.nan)#
-
+    corr_map = np.where((0.5<bt_/wt_) & (bt_/wt_< 2) & (wt_ > 0.1) & (bt_ > 0.1), bt_/wt_, np.nan)#
     img_d_img = nib.Nifti1Image(corr_map, img_f1.affine, header=img_f1.header)
     nib.save(img_d_img, './figures/map-on-surf/std/clusters/correlated-maps-{}-{}.nii.gz'.format(type_, tool_))
-    return bt_data1, wt_data1, bt_data2, wt_data2, bt_data3, wt_data3
+
+    # s0, s1, s2 = corr_map.shape
+    # corr_map2 = np.zeros(shape=corr_map.shape)
+    # corr_map2[int(s0/2),int(s1/2),int(s2/2)] = 100
+    # img_d_img2 = nib.Nifti1Image(corr_map2, img_f1.affine, header=img_f1.header)
+    # nib.save(img_d_img2, './figures/map-on-surf/std/clusters/artifact.nii.gz')
+
+    return bt_data1, wt_data1, bt_data2, wt_data2, bt_data3, wt_data3, corr_map, upper_map
 
 
 def plot_pair_corr_variance(bt, wt, type_, ind_, ax, tool_=None, append_=None):
@@ -257,13 +274,13 @@ def plot_pair_corr_variance(bt, wt, type_, ind_, ax, tool_=None, append_=None):
         ax.legend(facecolor='white', loc='upper right')
         #ax.set_xscale('log')
     else:
-        bt_data1, wt_data1, bt_data2, wt_data2, bt_data3, wt_data3 = cluster_std(bt_, wt_, img_f1, tool_, type_)
+        bt_data1, wt_data1, bt_data2, wt_data2, bt_data3, wt_data3, corr_map, upper_map = cluster_std(bt_, wt_, img_f1, tool_, type_)
         ax[ind_[0]].plot(data1, data2, linewidth=0, marker='o', alpha=.5, label=label_)
         ax[ind_[0]].plot(bt_data1, wt_data1, linewidth=0, marker='o', color='purple', alpha=.5, label='Upper cluster')
-        ax[ind_[0]].plot(bt_data2, wt_data2, linewidth=0, marker='o', color='yellow', alpha=.5, label='Lower cluster')
+        #ax[ind_[0]].plot(bt_data2, wt_data2, linewidth=0, marker='o', color='yellow', alpha=.5, label='Lower cluster')
         ax[ind_[0]].plot(bt_data3, wt_data3, linewidth=0, marker='o', color='green', alpha=.5, label='Correlated cluster')
 
-        ax[ind_[0]].plot(data1, y, color='black', alpha=.5, label='Regression line')
+        #ax[ind_[0]].plot(data1, y, color='black', alpha=.5, label='Regression line')
         # ci = 1.96 * np.std(y)/np.mean(y)
         # ax.fill_between(x, (y-ci), (y+ci), color='g', alpha=.9)
         ax[ind_[0]].set_title('')
@@ -276,10 +293,20 @@ def plot_pair_corr_variance(bt, wt, type_, ind_, ax, tool_=None, append_=None):
         ax[ind_[0]].legend(facecolor='white', loc='upper right')
         #ax[ind_[0]].set_xscale('log')
 
+        # fraction of clusters
+        data1[data1 == 0] = np.nan
+        all_corr_count = np.count_nonzero(~np.isnan(data1))
+        corr_map[np.isnan(bt_)] = np.nan
+        corr_count = np.count_nonzero(~np.isnan(corr_map))
+        upper_map[np.isnan(bt_)] = np.nan
+        upper_count = np.count_nonzero(~np.isnan(upper_map))
+        #print('{}\nall voxels:{}\ncorrelated voxels: {}\nupper voxels: {}\nFraction of green: %{:.1f}\nFraction of purple: %{:.1f}'.format(tool_, all_corr_count, corr_count, upper_count, (corr_count/all_corr_count)*100, (upper_count/all_corr_count)*100))
+        print('{}\nFraction of green: %{:.1f}\nFraction of purple: %{:.1f}'.format(tool_, (corr_count/all_corr_count)*100, (upper_count/all_corr_count)*100))
+        print('stop')
 
 def plot_corr_variances():
     ### Plot correlation of variances between BT and WT
-    for ind1, type_ in enumerate(['unthresh', 'thresh']):
+    for ind1, type_ in enumerate(['unthresh']):
         fig, ax = plt.subplots(nrows=1,ncols=3,figsize=(24, 7))
         #fig.suptitle("Correlation of variances between tool-variability vs. numerical-variability")
         for ind2, pair_ in enumerate(['fsl-spm', 'fsl-afni', 'afni-spm']):
@@ -567,15 +594,11 @@ def get_dice_values(regions_txt, image_parc, tool_results, mca_results):
 
 def plot_dices(dices_):
 
-    fig, ax = plt.subplots(nrows=1,ncols=2,figsize=(16, 8))
+    fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(16, 8))
     marker_ = ['o', '*', 'v', '>', '1', '2', '3', '4', 'P']
     colors = ['red', 'blue', 'green']
-    for ind1_, act_ in enumerate(['act_deact']): #exc_set_file
-        # title_ = 'Negative'
-        # if act_ == 'exc_set_file': title_ = 'Positive'
+    for ind1_, act_ in enumerate(['act_deact']):
         for ind_, tool_ in enumerate(['fsl-afni', 'fsl-spm', 'afni-spm']):
-            # title_ = 'Negative'
-            # if act_ == 'exc_set_file': title_ = 'Positive'
             tool_list = []
             mca_list = []
             for reg_ in dices_.keys():
@@ -587,48 +610,39 @@ def plot_dices(dices_):
                     mca_mean.append(dices_[reg_][act_]['mca']['{}{}'.format(f2, i)])
                 mca_list.append(mean(np.nan_to_num(mca_mean)))
 
+            # Get region sizes
             tool_list = np.nan_to_num(tool_list)
-            #mca_list = np.nan_to_num(mca_list)
-            nonz_tool = []
-            nonz_mca = []
             r_sizes = []
             for i in range(len(tool_list)):
-                if tool_list[i] != 0  and mca_list[i] != 0:
-                    nonz_tool.append(tool_list[i])
-                    nonz_mca.append(mca_list[i])
-                    l_ = list(dices_.keys())
-                    s = dices_[l_[i]]['size']
-                    r_sizes.append(s)
+                l_ = list(dices_.keys())
+                s = dices_[l_[i]]['size']
+                r_sizes.append(s)
     
-            slope, intercept, r, p, stderr = scipy.stats.linregress(nonz_tool, nonz_mca)
-            line = f'Regression line: y={intercept:.2f}+{slope:.2f}x, r={r:.2f}'
-            # line = 'Regression line'
-            y = intercept + slope * tool_list
-
-            ax[0].plot(tool_list, mca_list, linewidth=0, alpha=.5, color=colors[ind_], marker='o', label='{}'.format(tool_.upper()))
-            ax[0].plot(tool_list, y, color=colors[ind_], alpha=.7, label=line)
-            ax[0].set_xlabel('Between tool variation (Dice coefficient)')
-            ax[0].set_ylabel('Within tool variation (Dice coefficient)')
-            ax[0].set_title('Dice scores from thresholded maps')
-            ax[0].legend()
-
-            # Normalize dice values by region size
-            nonz_tool_norm = np.array(nonz_tool)*np.array(r_sizes)
-            nonz_mca_norm = np.array(nonz_mca)*np.array(r_sizes)
+            # Plot Normalize dice values by region size
+            tool_norm = np.array(tool_list)*np.array(r_sizes)
+            mca_norm = np.array(mca_list)*np.array(r_sizes)
             # Normalization between [0-1] = x -xmin/ xmax – xmin
-            nonz_tool_norm = (nonz_tool_norm - np.min(nonz_tool_norm)) / (np.max(nonz_tool_norm) - np.min(nonz_tool_norm))
-            nonz_mca_norm = (nonz_mca_norm - np.min(nonz_mca_norm)) / (np.max(nonz_mca_norm) - np.min(nonz_mca_norm))
+            tool_norm = (tool_norm - np.min(tool_norm)) / (np.max(tool_norm) - np.min(tool_norm))
+            mca_norm = (mca_norm - np.min(mca_norm)) / (np.max(mca_norm) - np.min(mca_norm))
 
-            slope_norm, intercept_norm, r_norm, p, stderr = scipy.stats.linregress(nonz_tool_norm, nonz_mca_norm)
-            line_norm = f'Regression line: y={intercept_norm:.2f}+{slope_norm:.2f}x, r={r_norm:.2f}'
-            y_norm = intercept_norm + slope_norm * np.array(nonz_tool)
+            # Compute regression line without zero values
+            nonz_tool_norm = []
+            nonz_mca_norm = []
+            for i in range(len(tool_norm)):
+                if tool_norm[i] != 0  and mca_norm[i] != 0:
+                    nonz_tool_norm.append(tool_norm[i])
+                    nonz_mca_norm.append(mca_norm[i])
 
-            ax[1].plot(nonz_tool_norm, nonz_mca_norm, linewidth=0, alpha=.5, color=colors[ind_], marker='o', label='{}'.format(tool_.upper()))
-            ax[1].plot(nonz_tool, y_norm, color=colors[ind_], alpha=.7, label=line_norm)
-            ax[1].set_xlabel('Between tool variation (Dice coefficient)')
-            ax[1].set_ylabel('Within tool variation (Dice coefficient)')
-            ax[1].set_title('Normailzed Dice scores from thresholded maps')
-            ax[1].legend()
+            slope_norm, intercept_norm, r_norm, p_norm, stderr = scipy.stats.linregress(nonz_tool_norm, nonz_mca_norm)
+            line_norm = f'Regression line: y={intercept_norm:.2f}+{slope_norm:.2f}x, r={r_norm:.2f}, p={p_norm:.10f}'
+            y_norm = intercept_norm + slope_norm * np.array(tool_list)
+
+            ax.plot(tool_norm, mca_norm, linewidth=0, alpha=.5, color=colors[ind_], marker='o', label='{}'.format(tool_.upper()))
+            ax.plot(tool_list, y_norm, color=colors[ind_], alpha=.7, label=line_norm)
+            ax.set_xlabel('Normalized Dice scores in BT')
+            ax.set_ylabel('Normalized Dice scores in WT')
+            # ax.set_title('Normalized Dice scores from thresholded maps')
+            ax.legend()
 
 
     #plt.show()
@@ -652,20 +666,53 @@ def compute_stats(data1_file, data2_file):
 
     diff_ = np.abs(data1 - data2)  # Absolute difference between data1 and data2
     mean_ = np.mean(diff_)                   # Mean of the difference
-    std_ = np.std(diff_, axis=0)            # Standard deviation of the difference
-    corr_ = np.corrcoef(data1, data2)[0,1] #  The correlation coefficient 
-    return mean_, std_, corr_
+    # std_ = np.std(diff_, axis=0)            # Standard deviation of the difference
+    # corr_ = np.corrcoef(data1, data2)[0,1] #  The correlation coefficient 
+    return mean_
 
 
 def print_stats(tool_results, mca_results):
-    for type_ in ['stat_file']:
+    # Compute Mean of diff over whole image (no mask for bg)
+    for type_ in ['stat_file', 'act_deact']: # 'stat_file': 'unthresh' and 'act_deact': 'thresh'
         for pair_ in ['fsl-spm', 'fsl-afni', 'afni-spm']:
             t1, t2 = pair_.split('-')
-            t1 = tool_results[t1][type_]
-            t2 = tool_results[t2][type_]
-            # mca_results['fsl'][1]['stat_file'] #Fuzzy sample
-            mean_, std_, corr_ = compute_stats(t1, t2)
-            print('BT stats in {} {}: mean {}, std {}, corr {}'.format(pair_, type_, mean_, std_, corr_))
+            f1 = tool_results[t1][type_]
+            f2 = tool_results[t2][type_]
+            bt_mean_diff = compute_stats(f1, f2)
+
+            # Fuzzy samples
+            means_ = []
+            means_.append(compute_stats(mca_results[t1][1][type_], mca_results[t1][2][type_]))
+            means_.append(compute_stats(mca_results[t1][1][type_], mca_results[t1][3][type_]))
+            means_.append(compute_stats(mca_results[t1][2][type_], mca_results[t1][3][type_]))
+            means_.append(compute_stats(mca_results[t2][1][type_], mca_results[t2][2][type_]))
+            means_.append(compute_stats(mca_results[t2][1][type_], mca_results[t2][3][type_]))
+            means_.append(compute_stats(mca_results[t2][2][type_], mca_results[t2][3][type_]))
+            wt_mean_diff = mean(means_)
+            print('Mean of diff of Tstats in {} {}:\nBT {}\nWT {}'.format(pair_, type_, bt_mean_diff, wt_mean_diff))
+
+    # Compute Std of differences (ignore NaNs/zeros as bg)    
+    path_ = './figures/map-on-surf/std/'
+    for type_ in ['thresh', 'unthresh']:
+        for pair_ in ['fsl-spm', 'fsl-afni', 'afni-spm']:
+            img1_ = nib.load('{}{}-{}-std.nii.gz'.format(path_, pair_, type_))
+            img2_ = nib.load('{}fuzzy-{}-{}-std.nii.gz'.format(path_, pair_, type_))
+            # img1_data = np.nan_to_num(img1_.get_fdata())
+            # img2_data = np.nan_to_num(img2_.get_fdata())
+            bt_std_data = img1_.get_fdata()
+            wt_std_data = img2_.get_fdata()
+            bt_std_mean = np.nanmean(bt_std_data)
+            wt_std_mean = np.nanmean(wt_std_data)
+            print('Std of diff of Tstats in {} {}:\nBT {}\nWT {}'.format(pair_, type_, bt_std_mean, wt_std_mean))
+            
+            # Compute SE: n=2 for bt and n=6 for wt
+            bt_se_data = bt_std_data/np.sqrt(2)
+            wt_se_data = wt_std_data/np.sqrt(6)
+            bt_se_mean = np.nanmean(bt_se_data)
+            wt_se_mean = np.nanmean(wt_se_data)
+            print('SE of diff of Tstats in {} {}:\nBT {}\nWT {}'.format(pair_, type_, bt_se_mean, wt_se_mean))
+
+            print("stop")
 
 
 def main(args=None):
@@ -759,9 +806,9 @@ def main(args=None):
     #print_stats(tool_results, mca_results)
 
     ### Variances between tools
-    var_between_tool(tool_results)
+    #var_between_tool(tool_results)
     ### Variances between fuzzy samples
-    var_between_fuzzy(mca_results)
+    #var_between_fuzzy(mca_results)
     ### get the ratio between BT and WT std images
     #get_ratio()
 
@@ -781,6 +828,68 @@ def main(args=None):
     # else:
     #     dices_ = get_dice_values(regions_txt, image_parc, tool_results, mca_results)
     #     plot_dices(dices_)
+
+
+
+    ### Compute gradient
+    # img = 'figures/map-on-surf/std/ratioT-fsl-afni-unthresh.nii.gz'
+    # img_load = nib.load(img)
+    # img_data = np.nan_to_num(img_load.get_fdata())
+
+    # from scipy import ndimage
+    # import cv2 as cv
+    # from skimage.feature import hessian_matrix
+
+    # # Get x-gradient in "sx"
+    # sx = ndimage.sobel(img_data,axis=0,mode='constant')
+    # sobelx = cv.Sobel(img_data,cv.CV_64F,1,0,ksize=5)
+    # # Get y-gradient in "sy"
+    # sy = ndimage.sobel(img_data,axis=1,mode='constant')
+    # # Get z-gradient in "sz"
+    # sz = ndimage.sobel(img_data,axis=2,mode='constant')
+    # # Get square root of sum of squares
+    # sobel=np.hypot(sx,sy,sz)
+
+    # img_d_img = nib.Nifti1Image(sobelx, img_load.affine, header=img_load.header)
+    # nib.save(img_d_img, './opencv-sx-gradient-fsl-afni.nii.gz')
+
+    # print('stop')
+
+
+
+
+
+    def nan_to_zero(img):
+        img_ = nib.load(img)
+        data_img = img_.get_fdata()
+        #log_data = np.log10(data_img+1.0)
+        # NAN values to zero
+        #log_data[np.isnan(log_data)] = 0.
+        data_img = np.nan_to_num(data_img)
+        #data_img[data_img == 1.7976931348623157e+308] = 0
+        max_ = np.max(data_img)
+        img_d_img = nib.Nifti1Image(data_img, img_.affine, header=img_.header)
+        return img_d_img, max_
+    import matplotlib
+    from nilearn import plotting
+
+    fig = plt.figure(figsize=(15, 8))
+    z_coords = [-30, -16, 0, 20, 36, 50, 64]
+
+    for pair_ in ["fsl-afni", "fsl-spm", "afni-spm"]:
+        img_ = 'figures/map-on-surf/std/ratio-{}-unthresh.nii.gz'.format(pair_)
+        gg, max_ = nan_to_zero(img_)
+        display = plotting.plot_stat_map(img_,
+                                        vmax=None, black_bg=True,display_mode='ortho', colorbar=True,
+                                        norm=matplotlib.colors.SymLogNorm(linthresh=1),
+                                        cmap='plasma',cut_coords=[0,-24,12], draw_cross=False)
+        display.savefig('paper/figures/plots/ratio-{}-unthresh-ortho.png'.format(pair_)) 
+
+        display = plotting.plot_stat_map(img_, vmax=None, display_mode='z', cut_coords=z_coords,
+                                        norm=matplotlib.colors.SymLogNorm(linthresh=1),
+                                        cmap='plasma',colorbar=False, draw_cross=False)
+        display.savefig('paper/figures/plots/ratio-{}-unthresh-z.png'.format(pair_)) 
+
 
 
 if __name__ == '__main__':
