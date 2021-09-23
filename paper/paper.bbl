@@ -1,0 +1,41 @@
+\begin{thebibliography}{1}
+
+\bibitem{bowring2019exploring}
+Alexander Bowring, Camille Maumet, and Thomas~E Nichols.
+\newblock Exploring the impact of analysis software on task {fMRI} results.
+\newblock {\em Human Brain Mapping}, 40:1--23, 2019.
+
+\bibitem{bowring2021isolating}
+Alexander Bowring, Thomas Nichols, and Camille Maumet.
+\newblock Isolating the sources of pipeline-variability in group-level
+  task-fmri results.
+\newblock 2021.
+
+\bibitem{denis2015verificarlo}
+Christophe Denis, Pablo de~Oliveira~Castro, and Eric Petit.
+\newblock {Verificarlo: Checking Floating Point Accuracy through Monte Carlo
+  Arithmetic}.
+\newblock In {\em 2016 IEEE 23nd Symposium on Computer Arithmetic (ARITH)},
+  pages 55--62, 2016.
+
+\bibitem{glasser2016multi}
+Matthew~F Glasser, Timothy~S Coalson, Emma~C Robinson, Carl~D Hacker, John
+  Harwell, Essa Yacoub, Kamil Ugurbil, Jesper Andersson, Christian~F Beckmann,
+  Mark Jenkinson, et~al.
+\newblock A multi-modal parcellation of human cerebral cortex.
+\newblock {\em Nature}, 536(7615):171--178, 2016.
+
+\bibitem{salari2021accurate}
+Ali Salari, Yohan Chatelain, Gregory Kiar, and Tristan Glatard.
+\newblock Accurate simulation of operating system updates in neuroimaging using
+  monte-carlo arithmetic.
+\newblock {\em arXiv preprint arXiv:2108.03129}, 2021.
+
+\bibitem{schonberg2012decreasing}
+Tom Schonberg, Craig~R Fox, Jeanette~A Mumford, Eliza Congdon, Christopher
+  Trepel, and Russell~A Poldrack.
+\newblock Decreasing ventromedial prefrontal cortex activity during sequential
+  risk-taking: an fmri investigation of the balloon analog risk task.
+\newblock {\em Frontiers in neuroscience}, 6:80, 2012.
+
+\end{thebibliography}
