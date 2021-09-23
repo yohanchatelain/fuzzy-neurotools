@@ -294,11 +294,11 @@ def plot_pair_corr_variance(bt, wt, type_, ind_, ax, tool_=None, append_=None):
         #ax[ind_[0]].set_xscale('log')
 
         # fraction of clusters
-        data1[data1 == 0] = np.nan
-        all_corr_count = np.count_nonzero(~np.isnan(data1))
-        corr_map[np.isnan(bt_)] = np.nan
+        data2[(data2 == 0) & (data1 == 0)] = np.nan
+        all_corr_count = np.count_nonzero(~np.isnan(data2))
+        corr_map[np.isnan(bt_) & np.isnan(wt_)] = np.nan
         corr_count = np.count_nonzero(~np.isnan(corr_map))
-        upper_map[np.isnan(bt_)] = np.nan
+        upper_map[np.isnan(bt_) & np.isnan(wt_)] = np.nan
         upper_count = np.count_nonzero(~np.isnan(upper_map))
         #print('{}\nall voxels:{}\ncorrelated voxels: {}\nupper voxels: {}\nFraction of green: %{:.1f}\nFraction of purple: %{:.1f}'.format(tool_, all_corr_count, corr_count, upper_count, (corr_count/all_corr_count)*100, (upper_count/all_corr_count)*100))
         print('{}\nFraction of green: %{:.1f}\nFraction of purple: %{:.1f}'.format(tool_, (corr_count/all_corr_count)*100, (upper_count/all_corr_count)*100))
@@ -613,10 +613,12 @@ def plot_dices(dices_):
             # Get region sizes
             tool_list = np.nan_to_num(tool_list)
             r_sizes = []
+            r_name = []
             for i in range(len(tool_list)):
                 l_ = list(dices_.keys())
                 s = dices_[l_[i]]['size']
                 r_sizes.append(s)
+                r_name.append(l_[i])
     
             # Plot Normalize dice values by region size
             tool_norm = np.array(tool_list)*np.array(r_sizes)
@@ -625,6 +627,11 @@ def plot_dices(dices_):
             tool_norm = (tool_norm - np.min(tool_norm)) / (np.max(tool_norm) - np.min(tool_norm))
             mca_norm = (mca_norm - np.min(mca_norm)) / (np.max(mca_norm) - np.min(mca_norm))
 
+            # regions that BT=0 and WT>0.93
+            x = np.where((tool_norm == 0) & (mca_norm > 0.93) , r_name, None)
+            res = [i for i in x if i]
+            print("BT only var regions in {}:\n{}".format(tool_, res))
+                
             # Compute regression line without zero values
             nonz_tool_norm = []
             nonz_mca_norm = []
@@ -828,68 +835,6 @@ def main(args=None):
     # else:
     #     dices_ = get_dice_values(regions_txt, image_parc, tool_results, mca_results)
     #     plot_dices(dices_)
-
-
-
-    ### Compute gradient
-    # img = 'figures/map-on-surf/std/ratioT-fsl-afni-unthresh.nii.gz'
-    # img_load = nib.load(img)
-    # img_data = np.nan_to_num(img_load.get_fdata())
-
-    # from scipy import ndimage
-    # import cv2 as cv
-    # from skimage.feature import hessian_matrix
-
-    # # Get x-gradient in "sx"
-    # sx = ndimage.sobel(img_data,axis=0,mode='constant')
-    # sobelx = cv.Sobel(img_data,cv.CV_64F,1,0,ksize=5)
-    # # Get y-gradient in "sy"
-    # sy = ndimage.sobel(img_data,axis=1,mode='constant')
-    # # Get z-gradient in "sz"
-    # sz = ndimage.sobel(img_data,axis=2,mode='constant')
-    # # Get square root of sum of squares
-    # sobel=np.hypot(sx,sy,sz)
-
-    # img_d_img = nib.Nifti1Image(sobelx, img_load.affine, header=img_load.header)
-    # nib.save(img_d_img, './opencv-sx-gradient-fsl-afni.nii.gz')
-
-    # print('stop')
-
-
-
-
-
-    def nan_to_zero(img):
-        img_ = nib.load(img)
-        data_img = img_.get_fdata()
-        #log_data = np.log10(data_img+1.0)
-        # NAN values to zero
-        #log_data[np.isnan(log_data)] = 0.
-        data_img = np.nan_to_num(data_img)
-        #data_img[data_img == 1.7976931348623157e+308] = 0
-        max_ = np.max(data_img)
-        img_d_img = nib.Nifti1Image(data_img, img_.affine, header=img_.header)
-        return img_d_img, max_
-    import matplotlib
-    from nilearn import plotting
-
-    fig = plt.figure(figsize=(15, 8))
-    z_coords = [-30, -16, 0, 20, 36, 50, 64]
-
-    for pair_ in ["fsl-afni", "fsl-spm", "afni-spm"]:
-        img_ = 'figures/map-on-surf/std/ratio-{}-unthresh.nii.gz'.format(pair_)
-        gg, max_ = nan_to_zero(img_)
-        display = plotting.plot_stat_map(img_,
-                                        vmax=None, black_bg=True,display_mode='ortho', colorbar=True,
-                                        norm=matplotlib.colors.SymLogNorm(linthresh=1),
-                                        cmap='plasma',cut_coords=[0,-24,12], draw_cross=False)
-        display.savefig('paper/figures/plots/ratio-{}-unthresh-ortho.png'.format(pair_)) 
-
-        display = plotting.plot_stat_map(img_, vmax=None, display_mode='z', cut_coords=z_coords,
-                                        norm=matplotlib.colors.SymLogNorm(linthresh=1),
-                                        cmap='plasma',colorbar=False, draw_cross=False)
-        display.savefig('paper/figures/plots/ratio-{}-unthresh-z.png'.format(pair_)) 
-
 
 
 if __name__ == '__main__':
