@@ -170,15 +170,6 @@ Moreover, FL enables us to assess the software packages that are dynamically lin
 So, it is important to trace the tool dependencies of the pipelines to ensure that the specific mathematical library
 is involved during the pipeline executions.
 
-% MCA allows for three perturbation modes: Random Rounding (RR) introduces the
-% perturbation in function outputs, simulating roundoff errors; Precision Bounding
-% (PB) introduces the perturbation in function operands, allowing for the
-% detection of catastrophic cancellations; and, Full MCA combines RR and PB,
-% resulting in the following perturbation:
-% \begin{equation} \label{eq:mca_modes}
-%   mca\_mode(x \circ y) = inexact_{RR}(  inexact_{PB}(x) \circ inexact_{PB}(y) )
-% \end{equation}
-
 
 \subsection{fMRI analysis \& Dataset}
 
@@ -264,13 +255,6 @@ The Dice values between Fuzzy samples correspond to the average pair-wise Dices 
 for each pair of tools.
 Also, we compared the correlation of Dice scores normalized by the region sizes in both conditions.
 
-% In this case, differences in the number of threads raised floating point rounding errors.
-% So it's probabilistic to have this issue by changing the hardware architecture like variation in CPU, GPU, APU from intel, AMD, or Nvidia.
-% It still may suffer from Hyper-threading (often on intel CPUs), means a physical CPU core divides into different
-% virtual cores that allows more than one thread to run on each core. It says that you allocated one CPU, but virtually have multi-threads.
-
-% EC is a means to assess whether only superficial scaling differences (differences by a scale factor over all voxels) 
-% are responsible for disparities between pair of images.
 
 \section{Results}
 All scripts and results to create the figures in this section are available on GitHub repository
@@ -343,13 +327,6 @@ Also, small P-values across all three pairs, including \num{1e-10} for \fslafni,
 and \num{2e-05} for \afnispm, confirms this correlation of similarities.
 The vertical line where the Dice score is zero in BT shows regions in the brain with no overlaps between activated voxels in BT but WT,
 including left/right `V1\_ROI' in \fslafni and \fslspm, and left/right `TGd\_ROI' in \afnispm results.
-% The regression line is computed over Dices where BT and WT are not zero.
-% The average of Dice scores range from to 
-% FSL-AFNI variations has the most similarity correlations which means that the results of these two tools are more \dots
-
-% In response to the out of border activated voxels can say:
-% This is likely due to the fact that SPM consistently had the smallest analysis mask out of the three packages,
-% while FSL had the largest. Number of activated voxels prove this fact.
 
 
 %%%%%%%%%% Var. of Thresh %%%%%%%%
@@ -436,9 +413,6 @@ The identity area is also represented on the MNI space in the second row in Figu
 This figure shows the spatial localization of the parts of the brain that BT variability is correlated with the numerical variability.
 This refines the presented results in Figure~\ref{fig:unthresh-varmaps},
 which indicates how correlation is uniformly distributed across the brain.
-% Spatial localization of significant activation in the thresholded images also varied across software packages.
-% Moreover, results show that pair of FSL-SPM has the least correlation of variability in within tool and between tool.
-% This will implies that ... which can help for further investigations. 
   
   %%%%%%%%%% Corr. plot of tstats%%%%%%%%
   \begin{figure*}[b]
