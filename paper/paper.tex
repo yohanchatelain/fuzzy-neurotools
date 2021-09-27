@@ -78,8 +78,8 @@ Moreover, the impact of methodological changes on fMRI analyses has been investi
 For instance, in related works, it has been shown that running the same fMRI experiments by different teams can substantially affect
 scientific conclusions~\cite{botvinik2020variability,carp2012plurality};
 replication of fMRI experiments using the three most well-known software packages can influence the final determining areas of
-brain activations~\cite{bowring2019exploring};%bowring2021isolating. 
-also, the choice of preprocessing pipelines on neuroimaging cortical surface analyses is compound with the instabilities~\cite{bhagwat2021understanding}.
+brain activations~\cite{bowring2019exploring}; %bowring2021isolating.
+also, the choice of preprocessing pipelines on neuroimaging cortical surface analyses is compound with instabilities~\cite{bhagwat2021understanding}.
 % In the presence of such instabilities, it is often hard to trust the data processing results. % validity of the computational results.
 
 In such a heterogeneous environment, numerical instability is an essential issue for reproducibility.
@@ -87,8 +87,8 @@ Numerical instability is a characteristic of pipelines that results from the inf
 and iterative convergence of numerical errors~\cite{freitas2002issue}.
 Stochastic arithmetic approaches such as Monte-Carlo Arithmetic (MCA)~\cite{Parker1997-qq} have been used to study the impact of numerical errors
 originating in floating-point computations in mathematical libraries.
-In~\cite{salari2021accurate}, we quantified the numerical stability of the HCP preprocessing pipeline~\cite{glasser2013} based on the MCA method by creating a Fuzzy environment
-, so that instrument mathematical functions are implemented in mathematical system libraries.
+In~\cite{salari2021accurate}, we quantified the numerical stability of the HCP preprocessing pipeline~\cite{glasser2013} based on the MCA method
+by creating a Fuzzy environment, so that instrument mathematical functions are implemented in mathematical system libraries.
 As a result of numerical perturbations, we discovered a very low numerical precision in the result images comparable to the operating system variability.
 In a related study~\cite{kiar2020numerical}, the instability of results was explored by instrumenting a connectome estimation pipeline with the MCA technique.
 These works demonstrate the necessity of numerical uncertainty quantification for understanding related issues that hamper the computational reproducibility of analyses.
@@ -405,10 +405,10 @@ However, there are voxels with a significant correlation between WT and BT that 
 % Fig4
 The scatter plot in Figure~\ref{fig:correlations} represents the correlation of standard deviation in WT and BT variability.
 We found two major clusters, including the identity cluster that corresponds to the correlations
-between BT and WT with the ratio of $0.5 < BT/WT < 1.5$,
+between BT and WT with the ratio of $0.5 < BT/WT < 1.5$ where the standard deviations are bigger than 0.1,
 and the upper cluster that shows voxels where BT $\approx$ 0.
 The percentage of voxels included in the identity cluster is \%9.9 in \fslspm, \%17.3 in \fslafni, and \%13.8 in \afnispm,
-and total voxels in the upper cluster are $\approx$ \%1.
+and in the upper cluster is $\approx$ \%1 for each pair of tools.
 The identity area is also represented on the MNI space in the second row in Figure~\ref{fig:correlations}.
 This figure shows the spatial localization of the parts of the brain that BT variability is correlated with the numerical variability.
 This refines the presented results in Figure~\ref{fig:unthresh-varmaps},
