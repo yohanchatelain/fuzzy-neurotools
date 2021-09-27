@@ -42,25 +42,67 @@ $^1$ Department of Computer-Science and Software Engineering, Concordia Universi
 
 \maketitle
 \begin{abstract}
-  
+
+Computational environments are known to affect the pipeline results in neuroimaging,
+presumably due to the creation, propagation, and amplification of small numerical errors.
+Numerical instability is a characteristic of the pipelines which amplify numerical errors
+originating in floating-point computations and then hamper reproducibility of the analyses.
+% It has been widely investigated that methodological flexibility can influence the final determined areas of brain activation.
+In particular, errors that highlight numerical instabilities are likely to appear as a result of changes in data analysis software packages.
+This work presents a comparative assessment of the group-level fMRI analysis between tool variability and numerical variability.   
+We characterize the effect of numerical perturbations on the fMRI analysis using the Fuzzy Libmath (FL) framework.
+FL is a technique to instrument the mathematical functions embedded in mathematical libraries based on the Monte-Carlo Arithmetic (MCA).
+We show that by taking advantage of the Fuzzy libmath framework, one can evaluate the numerical uncertainty of the pipelines. 
+We (1) evaluated the numerical stability of the fMRI analysis that has been reproduced using three of the most common tools in neuroimaging, FSL, AFNI, and SPM,
+and (2) compared between tool variability and numerical variability.
+We found a significant numerical variability on both thresholded and unthresholded images;
+results show that the order of magnitude of variations between tools was highly more than numerical variability.
+Also, we found a linear correlation between Dice scores computed region-by-region on thresholded maps in both conditions.
+
+
 \end{abstract}
 
 \begin{IEEEkeywords}
+  Numerical Instability, Reproducibility, Monte-Carlo Arithmetic, Neuroimaging
 \end{IEEEkeywords}
 
 
 \section{Introduction}
 
-\begin{itemize}
-    \item We presented a framework that can investigate the numerical instability of the pipelines based on Monte-Carlo arithmetic
-    by creating a Fuzzy environment, so that instrument mathematical functions implemented in mathematical system libraries (libmath). 
+% Data analysis workflows in many scientific domains have become increasingly complex and flexible. 
+Recent studies highlighted the instability of the neuroimaging pipelines depending on the computing platform,
+software package, and even tool versions. Changes in the computational
+environment such as compilers, libraries, operating systems may introduce small numerical errors and create
+significantly different results in unstable pipelines~\cite{Glatard2015,Gronenschild2012,salari2020spot}.
+Moreover, the impact of methodological changes on fMRI analyses has been investigated extensively~\cite{bowring2019exploring,botvinik2020variability,bhagwat2021understanding,carp2012plurality}.
+For instance, in related works, it has been shown that running the same fMRI experiments by different teams can substantially affect
+scientific conclusions~\cite{botvinik2020variability,carp2012plurality};
+replication of fMRI experiments using the three most well-known software packages can influence the final determining areas of
+brain activations~\cite{bowring2019exploring};%bowring2021isolating. 
+also, the choice of preprocessing pipelines on neuroimaging cortical surface analyses is compound with the instabilities~\cite{bhagwat2021understanding}.
+% In the presence of such instabilities, it is often hard to trust the data processing results. % validity of the computational results.
 
-    \item Methodological choice can influence the final determining areas of brain activation.
-    This opens so results flexibility~\cite{bowring2019exploring,bowring2021isolating}. 
+In such a heterogeneous environment, numerical instability is an essential issue for reproducibility.
+Numerical instability is a characteristic of pipelines that results from the influence of the floating-point arithmetics
+and iterative convergence of numerical errors~\cite{freitas2002issue}.
+Stochastic arithmetic approaches such as Monte-Carlo Arithmetic (MCA)~\cite{Parker1997-qq} have been used to study the impact of numerical errors
+originating in floating-point computations in mathematical libraries.
+In~\cite{salari2021accurate}, we quantified the numerical stability of the HCP preprocessing pipeline~\cite{glasser2013} based on the MCA method by creating a Fuzzy environment
+, so that instrument mathematical functions are implemented in mathematical system libraries.
+As a result of numerical perturbations, we discovered a very low numerical precision in the result images comparable to the operating system variability.
+In a related study~\cite{kiar2020numerical}, the instability of results was explored by instrumenting a connectome estimation pipeline with the MCA technique.
+These works demonstrate the necessity of numerical uncertainty quantification for understanding related issues that hamper the computational reproducibility of analyses.
+
+In this work, we reproduce an fMRI experiment with different neuroimaging software packages in the presence of the Fuzzy environment,
+and then quantify the numerical variability and between tool variability in the results. 
+The primary objective of this study is to answer these two questions: 1) how the fMRI analyses across tools are numerically stable?
+2) how the numerical variability is in comparison with the tool variability?
+This comparative study reveals the importance of numerical variability and motivates research studies to evaluate the numerical uncertainty of the pipelines.
   
-    \item In this paper, we aim to answer the questions 1) how the fMRI analyses are numerically stable?
-    2) how the numerical variability is in comparison with the tool variability?
-\end{itemize}
+% We start to reproduce an analysis from Bowring, this can be as a practice for reproducibility manner in the community.
+% In particular, we investigate the effect of 1) between software 2) within software (numerical)
+% We present a comparative assessment of group-level analysis of an fMRI pipeline.   
+
 
 \section{Materials and Methods}
 
@@ -118,15 +160,24 @@ This allows one to provide a wrapper around a function in another shared library
 
 
 Finally, the instrumented functions are loaded in the pipeline using LD\_PRELOAD, a Linux environment variable
-to force load a shared library into an executable. ​
+to force load a shared library into an executable.
 This allows functions defined in FL to transparently
-overload the original ones without the need to modify or recompile the analysis pipeline.​
+overload the original ones without the need to modify or recompile the analysis pipeline.
 
 This technique allows measuring the effect of numerical variability by running a program multiple times
 with the feature of controlling the magnitude of the perturbations as perceived by the application.
 Moreover, FL enables us to assess the software packages that are dynamically linked to the mathematical libraries.
 So, it is important to trace the tool dependencies of the pipelines to ensure that the specific mathematical library
 is involved during the pipeline executions.
+
+% MCA allows for three perturbation modes: Random Rounding (RR) introduces the
+% perturbation in function outputs, simulating roundoff errors; Precision Bounding
+% (PB) introduces the perturbation in function operands, allowing for the
+% detection of catastrophic cancellations; and, Full MCA combines RR and PB,
+% resulting in the following perturbation:
+% \begin{equation} \label{eq:mca_modes}
+%   mca\_mode(x \circ y) = inexact_{RR}(  inexact_{PB}(x) \circ inexact_{PB}(y) )
+% \end{equation}
 
 
 \subsection{fMRI analysis \& Dataset}
@@ -213,6 +264,13 @@ The Dice values between Fuzzy samples correspond to the average pair-wise Dices 
 for each pair of tools.
 Also, we compared the correlation of Dice scores normalized by the region sizes in both conditions.
 
+% In this case, differences in the number of threads raised floating point rounding errors.
+% So it's probabilistic to have this issue by changing the hardware architecture like variation in CPU, GPU, APU from intel, AMD, or Nvidia.
+% It still may suffer from Hyper-threading (often on intel CPUs), means a physical CPU core divides into different
+% virtual cores that allows more than one thread to run on each core. It says that you allocated one CPU, but virtually have multi-threads.
+
+% EC is a means to assess whether only superficial scaling differences (differences by a scale factor over all voxels) 
+% are responsible for disparities between pair of images.
 
 \section{Results}
 All scripts and results to create the figures in this section are available on GitHub repository
@@ -285,6 +343,13 @@ Also, small P-values across all three pairs, including \num{1e-10} for \fslafni,
 and \num{2e-05} for \afnispm, confirms this correlation of similarities.
 The vertical line where the Dice score is zero in BT shows regions in the brain with no overlaps between activated voxels in BT but WT,
 including left/right `V1\_ROI' in \fslafni and \fslspm, and left/right `TGd\_ROI' in \afnispm results.
+% The regression line is computed over Dices where BT and WT are not zero.
+% The average of Dice scores range from to 
+% FSL-AFNI variations has the most similarity correlations which means that the results of these two tools are more \dots
+
+% In response to the out of border activated voxels can say:
+% This is likely due to the fact that SPM consistently had the smallest analysis mask out of the three packages,
+% while FSL had the largest. Number of activated voxels prove this fact.
 
 
 %%%%%%%%%% Var. of Thresh %%%%%%%%
@@ -327,6 +392,7 @@ including left/right `V1\_ROI' in \fslafni and \fslspm, and left/right `TGd\_ROI
 
 
 \subsection{Group-level unthresholded maps}
+% \subsection{Variability of unthresholded statistical maps}
 
 % Fig3
 Figure~\ref{fig:unthresh-varmaps} shows the brain maps of standard deviations for group-level unthresholded T-statistics in WT and BT.
@@ -370,8 +436,10 @@ The identity area is also represented on the MNI space in the second row in Figu
 This figure shows the spatial localization of the parts of the brain that BT variability is correlated with the numerical variability.
 This refines the presented results in Figure~\ref{fig:unthresh-varmaps},
 which indicates how correlation is uniformly distributed across the brain.
-
-
+% Spatial localization of significant activation in the thresholded images also varied across software packages.
+% Moreover, results show that pair of FSL-SPM has the least correlation of variability in within tool and between tool.
+% This will implies that ... which can help for further investigations. 
+  
   %%%%%%%%%% Corr. plot of tstats%%%%%%%%
   \begin{figure*}[b]
     \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
@@ -400,6 +468,7 @@ which indicates how correlation is uniformly distributed across the brain.
 
 \section{Conclusion \& Discussion}
 
+% There are many statistical comparisons, but the neuro-scientific interpretation of results is not on my side.
 
 \begin{itemize}
     \item[$\bullet$ ] In this study, we represented the magnitude of differences in between tool and within tool results.
