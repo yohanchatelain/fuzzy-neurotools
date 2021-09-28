@@ -33,6 +33,8 @@
 \newcommand{\fslspm}{FSL-SPM\xspace}
 \newcommand{\fslafni}{FSL-AFNI\xspace}
 \newcommand{\afnispm}{AFNI-SPM\xspace}
+\newcommand{\tristan}[1]{\color{orange}\textbf{From Tristan:} #1\color{black}\xspace}
+
 
 
 \title{Comparing tool variability and numerical variability in fMRI analyses}
@@ -43,22 +45,20 @@ $^1$ Department of Computer-Science and Software Engineering, Concordia Universi
 \maketitle
 \begin{abstract}
 
-Computational environments are known to affect the pipeline results in neuroimaging,
-presumably due to the creation, propagation, and amplification of small numerical errors.
-Numerical instability is a characteristic of the pipelines which amplify numerical errors
-originating in floating-point computations and then hamper reproducibility of the analyses.
-% It has been widely investigated that methodological flexibility can influence the final determined areas of brain activation.
-In particular, errors that highlight numerical instabilities are likely to appear as a result of changes in data analysis software packages.
-This work presents a comparative assessment of the group-level fMRI analysis between tool variability and numerical variability.   
-We characterize the effect of numerical perturbations on the fMRI analysis using the Fuzzy Libmath (FL) framework.
-FL is a technique to instrument the mathematical functions embedded in mathematical libraries based on the Monte-Carlo Arithmetic (MCA).
-We show that by taking advantage of the Fuzzy libmath framework, one can evaluate the numerical uncertainty of the pipelines. 
-We (1) evaluated the numerical stability of the fMRI analysis that has been reproduced using three of the most common tools in neuroimaging, FSL, AFNI, and SPM,
-and (2) compared between tool variability and numerical variability.
-We found a significant numerical variability on both thresholded and unthresholded images;
-results show that the order of magnitude of variations between tools was highly more than numerical variability.
-Also, we found a linear correlation between Dice scores computed region-by-region on thresholded maps in both conditions.
-
+Numerical and software variability broadly affect structural, diffusion, and functional MRI analyses. Numerical
+variability originates in software updates or code
+parallelization, whereas software variability reflects discrepancies between
+models implemented in different analysis software packages. While numerical
+and software variability were both shown to impact analysis outcomes, the
+extent to which these sources of variability compare for a given
+analysis remains understudied. This work presents a comparison of
+numerical and software variability for group-level functional MRI analysis
+\tristan{did we give up on individual analyses?}.
+We reproduced a previous comparison between functional MRI analysis 
+software packages FSL, AFNI, and SPM, which we extended to measure 
+numerical variability through Monte-Carlo arithmetic. 
+We find that between-tool variability is an order of magnitude higher than numerical variability.
+\tristan{summarize conclusions}
 
 \end{abstract}
 
