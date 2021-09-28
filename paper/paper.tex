@@ -34,6 +34,7 @@
 \newcommand{\fslafni}{FSL-AFNI\xspace}
 \newcommand{\afnispm}{AFNI-SPM\xspace}
 \newcommand{\tristan}[1]{\color{orange}\textbf{From Tristan:} #1\color{black}\xspace}
+\newcommand{\note}[2]{\color{green}\textbf{Note:} #1\color{black}\xspace}
 
 
 
@@ -272,7 +273,7 @@ The variability between pair of images in each condition was measured using the 
 Overall, the distribution of the pairwise variations in WT is an order of magnitude lower than BT in both means and standard deviations.
 While the most variability was observed in the pair of \fslafni, the pair of \fslspm made the least variations for all conditions.
 % Overally, we see that values in between tools are comparable to values in within tool results.
-
+\note{Add statistics for subject level (first-level) analyses}
 
 %%%%%%%%%% Summary of statstics %%%%%%%%
 \setlength{\tabcolsep}{5pt}
@@ -405,7 +406,7 @@ However, there are voxels with a significant correlation between WT and BT that 
 % Fig4
 The scatter plot in Figure~\ref{fig:correlations} represents the correlation of standard deviation in WT and BT variability.
 We found two major clusters, including the identity cluster that corresponds to the correlations
-between BT and WT with the ratio of $0.5 < BT/WT < 1.5$ where the standard deviations are bigger than 0.1,
+between BT and WT with the ratio of $0.5 < BT/WT < 2$ where the standard deviations are bigger than 0.1,
 and the upper cluster that shows voxels where BT $\approx$ 0.
 The percentage of voxels included in the identity cluster is \%9.9 in \fslspm, \%17.3 in \fslafni, and \%13.8 in \afnispm,
 and in the upper cluster is $\approx$ \%1 for each pair of tools.
