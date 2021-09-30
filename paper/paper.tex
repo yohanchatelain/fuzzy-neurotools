@@ -278,27 +278,28 @@ While the highest variability was observed for \fslafni, \fslspm made the least 
 \note{Add statistics for subject level (first-level) analyses}
 
 %%%%%%%%%% Summary of statstics %%%%%%%%
-\setlength{\tabcolsep}{5pt}
+\setlength{\tabcolsep}{7pt}
 \begin{table}[h]
     \centering
-    \begin{tabular}{ccc|cc}
+    \begin{tabular}{cccc|cc}
         \toprule
-        \multirow{2}{*}{} & \multicolumn{2}{c}{Thresholded} & \multicolumn{2}{c}{Unthresholded} \\
-        \cmidrule{2-3} \cmidrule{4-5} \\
-        {} & Mean diff. & Std. diff. & Mean diff. & Std. diff. \\
+        \multirow{2}{*}{}& {} & \multicolumn{2}{c}{Thresholded} & \multicolumn{2}{c}{Unthresholded} \\
+        \cmidrule{3-4} \cmidrule{5-6} \\
+        {} & {} & Mean & Std. dev. & Mean & Std. dev. \\
         \midrule
         \rowcolor{lightgray}
-        FSL vs. SPM          &  0.043       & 1.282      & 0.242     & 0.443  \\
+        {BT} & FSL vs. SPM          &  0.043       & 1.282      & 0.242     & 0.443  \\
         \rowcolor{lightgray}
-        FSL vs. AFNI         &  0.099       & 1.548      & 0.302     & 0.547  \\
+        {} & FSL vs. AFNI         &  0.099       & 1.548      & 0.302     & 0.547  \\
         \rowcolor{lightgray}
-        AFNI vs. SPM         &  0.079       & 1.475      & 0.254     & 0.608  \\
-        Fuzzy FSL and SPM    &  0.005       & 0.358      & 0.030     & 0.099  \\
-        Fuzzy FSL and AFNI   &  0.011       & 0.475      & 0.038     & 0.155  \\
-        Fuzzy AFNI and SPM   &  0.011       & 0.458      & 0.033     & 0.144  \\
+        {} & AFNI vs. SPM         &  0.079       & 1.475      & 0.254     & 0.608  \\
+        {WT} & FSL and SPM    &  0.005       & 0.358      & 0.030     & 0.099  \\
+        {} & FSL and AFNI   &  0.011       & 0.475      & 0.038     & 0.155  \\
+        {} & AFNI and SPM   &  0.011       & 0.458      & 0.033     & 0.144  \\
         \bottomrule
     \end{tabular}
-    \caption{Summary of T-statistics mean and standard deviation of differences for each pair of tools \tristan{only pairs of tools? Add voxel-wise to this caption.}.}
+    \caption{Summary of voxel-wise mean and standard deviation of absolute differences for each pair of tools
+    in group-level T-statistics.}
     \label{table:pipeline-stats}
 \end{table}
 
@@ -309,7 +310,7 @@ While the highest variability was observed for \fslafni, \fslspm made the least 
 
 %Fig 1
 Comparisons of standard deviations between thresholded images in WT and BT
-on MNI space are shown in Figure~\ref{fig:thresh-varmaps}.
+on MNI space are shown in Figure~\ref{fig:thresh-maps}.
 
 While we observe substantial variations in BT with the average standard deviation $\approx$ 1.5,
 the order of magnitude of variations in WT is much lower with the average standard deviation $\approx$ 0.5,
@@ -317,9 +318,9 @@ as was anticipated. However, numerical variability is still significant in WT re
 %Moreover, the numerical perturbations produces variations in similar order og magnitude in WT compared to BT variations
 Moreover, we see the similar order of magnitude in WT variations compared to BT variations
 in some regions in the thresholded images.
-For instance, some parts of the frontal lobe in the sagittal plane for almost all pairs and the occipital lobe in the axial plane
-for the pairs of \fslspm and \fslafni in Figure~\ref{fig:unthresh-varmaps}
-are closely replicated using the numerical perturbations. 
+\note{For instance, some parts of the frontal lobe in the sagittal plane for almost all pairs and the occipital
+lobe in the axial plane for the pairs of \fslspm and \fslafni in Figure~\ref{fig:thresh-maps}
+are closely replicated using the numerical perturbations.}
 
 % Fig2
 In Figure~\ref{fig:dice-thresh}, we compare region-by-region Dice coefficients of
@@ -339,20 +340,18 @@ including left/right `V1\_ROI' in \fslafni and \fslspm, and left/right `TGd\_ROI
       \centering
       \includegraphics[width=\textwidth]{figures/bt-wt-thresh-std.pdf}
       %\caption{Standard deviation of thresholded t-statistics map on template surface}
-      \label{fig:thresh-varmaps1}
     \end{subfigure}
     \hfill
     \begin{subfigure}[t]{\textwidth}
       \centering
       \includegraphics[width=\textwidth]{figures/ratio-thresh-std.pdf}
       %\caption{Standard deviation of thresholded t-statistics map on template surface}
-      \label{fig:thresh-ratiomaps}
     \end{subfigure}
     \caption{Maps of standard deviation of thresholded T-statistics. The first and second rows show
     maps on BT and WT results, respectively, and the third row represents maps of the ratio between them.}
     % so that bright blue areas indicate more similar order of magnitude of variations in both conditions,
     %and vise versa for the darkder regions.}
-    \label{fig:thresh-varmaps}
+    \label{fig:thresh-maps}
     \end{minipage}}
   \end{figure*}
   
@@ -375,46 +374,44 @@ including left/right `V1\_ROI' in \fslafni and \fslspm, and left/right `TGd\_ROI
 % \subsection{Variability of unthresholded statistical maps}
 
 % Fig3
-Figure~\ref{fig:unthresh-varmaps} shows the brain maps of standard deviations for group-level unthresholded T-statistics in WT and BT.
+Figure~\ref{fig:unthresh-maps} shows the brain maps of standard deviations for group-level unthresholded T-statistics in WT and BT.
 Results show a different magnitude of
 the order of variations in WT and BT with standard deviation ranges from $\approx$ 0.12 to $\approx$ 0.5 on average, respectively.
 The maps show regions in the brain where the magnitude of standard deviation is close to zero in WT but it exceeds 2.0 in BT,
 such as the limbic and frontal lobes in the sagittal plane.
 However, there are voxels with a significant correlation between WT and BT that are uniformly distributed across the brain maps.
 
-%%%%%%%%%% Var. of Thresh %%%%%%%%
+%%%%%%%%%% Var. of Unthresh %%%%%%%%
 \begin{figure*}[b]
     \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
     \begin{subfigure}[t]{\textwidth}
       \centering
       \includegraphics[width=\textwidth]{figures/bt-wt-unthresh-std.pdf}
       %\caption{Standard deviation of thresholded t-statistics map on template surface}
-      \label{fig:unthresh-varmaps1}
     \end{subfigure}
     \hfill
     \begin{subfigure}[t]{\textwidth}
       \centering
       \includegraphics[width=\textwidth]{figures/ratio-unthresh-std.pdf}
       %\caption{Standard deviation of thresholded t-statistics map on template surface}
-      \label{fig:unthresh-ratiomaps}
     \end{subfigure}
     \caption{Maps of standard deviation of unthresholded T-statistics. The first and second rows show
     maps on BT and WT results, respectively, and the third row represents maps of the ratio between them.}
-    \label{fig:unthresh-varmaps}
+    \label{fig:unthresh-maps}
     \end{minipage}}
   \end{figure*}
   
 
 % Fig4
-The scatter plot in Figure~\ref{fig:correlations} represents the correlation of standard deviation in WT and BT variability.
+The scatter plot in Figure~\ref{fig:unthresh-correlation} represents the correlation of standard deviation in WT and BT variability.
 We found two major clusters, including the identity cluster that corresponds to the correlations
 between BT and WT with the ratio of $0.5 < BT/WT < 2$ where the standard deviations are bigger than 0.1,
 and the upper cluster that shows voxels where BT $\approx$ 0.
 The percentage of voxels included in the identity cluster is \%9.9 in \fslspm, \%17.3 in \fslafni, and \%13.8 in \afnispm,
 and in the upper cluster is $\approx$ \%1 for each pair of tools.
-The identity area is also represented on the MNI space in the second row in Figure~\ref{fig:correlations}.
+The identity area is also represented on the MNI space in the second row in Figure~\ref{fig:unthresh-correlation}.
 This figure shows the spatial localization of the parts of the brain that BT variability is correlated with the numerical variability.
-This refines the presented results in Figure~\ref{fig:unthresh-varmaps},
+This refines the presented results in Figure~\ref{fig:unthresh-maps},
 which indicates how correlation is uniformly distributed across the brain.
   
   %%%%%%%%%% Corr. plot of tstats%%%%%%%%
@@ -424,22 +421,76 @@ which indicates how correlation is uniformly distributed across the brain.
         \centering
         \includegraphics[width=\textwidth]{figures/std-corr-unthresh-plot.png}
         %\caption{Standard deviation of thresholded t-statistics map on template surface}
-        \label{fig:unthresh-corrplot}
       \end{subfigure}
       \hfill
       \begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/corr-unthresh-std.pdf}
         %\caption{Standard deviation of thresholded t-statistics map on template surface}
-        \label{fig:unthresh-corrmaps}
       \end{subfigure}
       \caption{Correlation of standard deviations in BT and WT from the unthresholded T-statistics. 
       The first row plots the correlations voxel by voxel and is highlighted with different colors
       for two clusters, including the upper cluster (purple color) and the correlated cluster (green color).
       The second row maps the correlated area on the MNI space.}
-    \label{fig:correlations}
+    \label{fig:unthresh-correlation}
     \end{minipage}}
   \end{figure*}
+  
+
+  \subsection{Subject-level unthresholded maps}
+
+  Table~\ref{table:firstlevel-stats} shows a summary of the statistics from the subject-level analysis results.
+  This table represents the average of the mean and standard deviation of absolute differences of unthresholded T-statistics
+  across 16 subjects for each pair of tools.
+  Results show that subjects 15 and 10 were produced the least and the most variability, respectively, among all pairs, subjects,
+  and both BT and WT.
+  While subject 15 generated results with the mean of $\approx$ 0.093 and standard deviation of $\approx$ 0.174,
+  subject 10 produced results with the mean of $\approx$ 0.183 and standard deviation of $\approx$ 0.341.
+  This observation shows an order of magnitude of variability between subjects.
+  % The most variability for \fslspm appeared in subject 1 in BT and subject 11 in WT, and for \fslafni
+  % and \afnispm subject 10 in BT and subject 5 in WT were the most variable subjects.
+  Moreover, Figure~\ref{fig:unthresh-firstlevel} shows the maps of standard deviations on MNI space in WT and BT for subjects 15 and 10.
+  We can see a significant variability between subjects.
+
+
+%%%%%%%%%% Summary of statstics %%%%%%%%
+\setlength{\tabcolsep}{5pt}
+\begin{table*}[h]
+    \centering
+    \begin{tabular}{cccc|cc|cc}
+        \toprule
+        \multirow{2}{*}{} &{} & \multicolumn{2}{c}{All Subjects} & \multicolumn{2}{c}{Least variable} & \multicolumn{2}{c}{Most variable} \\
+        \cmidrule{3-4} \cmidrule{5-6} \cmidrule{7-8} \\
+        {} & {} & Mean  & Std. dev.  & Mean & Std. dev. & Mean  & Std. dev. \\
+        \midrule
+        \rowcolor{lightgray}
+        {BT} & FSL vs. SPM           & 0.245     & 0.366       & 0.166     & 0.255    & 0.273    & 0.405  \\
+        \rowcolor{lightgray}
+        {}   & FSL vs. AFNI          & 0.295     & 0.439      & 0.183     & 0.282     & 0.392    & 0.582  \\
+        \rowcolor{lightgray}
+        {}   & AFNI vs. SPM          & 0.238     & 0.491      & 0.150     & 0.314     & 0.310    & 0.642  \\
+        {WT} & FSL and SPM    & 0.033     & 0.092      & 0.018     & 0.050     & 0.036    & 0.099  \\
+        {}   & FSL and AFNI   & 0.040     & 0.136      & 0.021     & 0.075     & 0.048    & 0.165  \\
+        {}   & AFNI and SPM   & 0.033     & 0.124      & 0.019     & 0.071     & 0.039    & 0.155  \\
+        \bottomrule
+    \end{tabular}
+    \caption{Summary of voxel-wise mean and standard deviation of absolute differences for each pair of tools
+    in subject-level T-statistics.}
+    \label{table:firstlevel-stats}
+\end{table*}
+
+  
+  %%%%%%%%%% Var. of Unthresh %%%%%%%%
+  \begin{figure*}[b]
+    \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
+      \centering
+      \includegraphics[width=\textwidth]{figures/sbj-level-bt-wt-unthresh-std.pdf}
+    \caption{Maps of standard deviation of unthresholded T-statistics from subject 15 in the rows A and B,
+    and subject 10 in the rows C and D.}
+    \label{fig:unthresh-firstlevel}
+    \end{minipage}}
+  \end{figure*}
+  
   
   
 
