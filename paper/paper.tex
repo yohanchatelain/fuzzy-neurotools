@@ -108,8 +108,10 @@ This comparative study reveals the importance of numerical variability and motiv
 
 \subsection{Fuzzy libmath environment}
 
-To simulate the machine-level uncertainty, we used the method introduced in~\cite{salari2021accurate} called Fuzzy libmath (FL).
-FL uses Monte Carlo Arithmetic (MCA) to introduce a controlled amount of noise in the floating-point operations
+To simulate the machine-level uncertainty \tristan{introduce machine-level
+uncertainty}, we used the method introduced in~\cite{salari2021accurate}
+called Fuzzy libmath (FL). FL uses Monte Carlo Arithmetic (MCA) to
+introduce a controlled amount of noise in the floating-point operations \tristan{not in all of them}
 through the following perturbation model:
 \begin{equation} \label{eq:mca_inexact}
   inexact(x) = x + 2^{e_x-t}\xi
@@ -119,17 +121,17 @@ $t$ is the virtual precision, the number of bits in mantissa that will not be pe
 and $\xi$ is a random uniform variable of $(-\frac{1}{2}, \frac{1}{2})$.
 The perturbation is applied in a given number of least-significant bits,
 which models floating-point rounding and catastrophic cancellation errors.
-This is automated using Verificarlo tool~\cite{denis2015verificarlo} that implements MCA in the compilation time.
+This is automated using Verificarlo tool~\cite{denis2015verificarlo} that implements MCA at compilation time.
 
-With the goal of OS-level perturbations, this framework instruments mathematical functions embedded
-in the mathematical library in GNU operating systems, libmath.
+With the goal of OS-level perturbations \tristan{what does it mean?}, this framework instruments mathematical functions embedded
+in the mathematical library \tristan{tautology} in GNU operating systems, libmath.
 To avoid some pitfalls in deterministic arithmetics like producing results out of the function definition,
 FL instruments the functions by wrapping them so that only the original functions' output
 is perturbed instead of input or their implementation.
-This is achieved by adding a floating-point zero to the output of the original function so that the result of this summation
+This is achieved by adding a floating-point zero to the output of the original function \tristan{no way to understand from the text why adding a zero would introduce noise} so that the result of this summation
 is perturbed and returned.
 Listing~\ref{algo:wrapper} shows an example of this wrapping for the log function in both single and double precisions.
-In this script, the original functions are called by \texttt{dlsym}, a function that returns the memory address of a symbol
+In this script, the original functions are called by \texttt{dlsym} \tristan{this can't be understood unless the ldpreload trick is mentioned before}, a function that returns the memory address of a symbol
 using the handle of \texttt{RTLD\_NEXT}.
 This allows one to provide a wrapper around a function in another shared library. 
 
@@ -164,22 +166,23 @@ to force load a shared library into an executable.
 This allows functions defined in FL to transparently
 overload the original ones without the need to modify or recompile the analysis pipeline.
 
-This technique allows measuring the effect of numerical variability by running a program multiple times
+FL allows measuring the effect of numerical variability by running a program multiple times
 with the feature of controlling the magnitude of the perturbations as perceived by the application.
-Moreover, FL enables us to assess the software packages that are dynamically linked to the mathematical libraries.
+FL enables us to assess the software packages that are dynamically linked to the mathematical libraries.
 So, it is important to trace the tool dependencies of the pipelines to ensure that the specific mathematical library
-is involved during the pipeline executions.
+is involved during the pipeline executions. \tristan{``is involved'' is required but not sufficient. How do you guarantee that 
+no other math functions are called on the side?}
 
 
 \subsection{fMRI analysis \& Dataset}
 
-We replicated the fMRI analysis described as study `ds000001' in~\cite{bowring2019exploring}
-with the publicly available data repository in~\href{https://openneuro.org/datasets/ds000001}{OpenNeuro}
-using the three well-known software packages for fMRI data processing, including
-FSL~\cite{jenkinson2012fsl}, AFNI~\cite{cox1996afni}, and SPM~\cite{penny2011statistical}.
-We selected this publication to replicate the fMRI analysis because the methods and sources were explicitly
-written to be accessible and reproducible. This enabled us to reanalyze tests using the FL framework and
-compare results with the between tool variability.
+We replicated the fMRI analysis described as study `ds000001' in~\cite{bowring2019exploring}, relying on
+the data publicly available in OpenNeuro at \url{https://openneuro.org/datasets/ds000001}
+and using the three main software packages for fMRI data processing, namely
+FSL~\cite{jenkinson2012fsl}, AFNI~\cite{cox1996afni}, and SPM~\cite{penny2011statistical} \tristan{expand acronyms}.
+We selected this analysis because the methods and sources \tristan{what do you mean? data?} were explicitly
+written to be accessible and reproducible. This enabled us to reanalyze tests \tristan{``tests'' isn't understandable} using the FL framework and
+compare results with the between tool variability \tristan{``between tool variability isn't understandable"}.
 
 In the selected study, 16 healthy adult subjects participated in the balloon analog risk task to measure
 risk-taking behavior over three scanning sessions.
@@ -188,8 +191,7 @@ Table~\ref{table:pipeline-steps} shows the steps that were taken in the procedur
 In the original study, a number of preprocessing steps widely accepted within the community, such as motion correction,
 segmentation, brain extraction, and registration, were applied in all analyses to ensure that results from each software
 package could be compared objectively.
-A full description of the pipelines implemented within three packages is presented in the original
-study~\cite{bowring2019exploring,schonberg2012decreasing}.
+A full description of the pipelines implemented within three packages is presented in~\cite{bowring2019exploring,schonberg2012decreasing}.
 
 
 %%%%%%%%%% Summary of statstics %%%%%%%%
@@ -222,7 +224,7 @@ study~\cite{bowring2019exploring,schonberg2012decreasing}.
         \hline
 
       \end{tabular}
-    \caption{Software processing steps. This table is adopted from~\cite{bowring2019exploring}.}
+    \caption{Software processing steps. Table is adapted from~\cite{bowring2019exploring}.}
     \label{table:pipeline-steps}
 \end{table}
 
@@ -231,25 +233,25 @@ study~\cite{bowring2019exploring,schonberg2012decreasing}.
 
 To capture variability between tools, the fMRI analysis pipeline was processed using three of the most popular software
 packages in neuroimaging, including FSL (version 5.0.10), AFNI (version 18.1.09), and SPM (version SPM12, r7771)
-on Octave (version 5.2). The analyses were conducted on the same operating system, CentOS 7.3.
+executed with GNU/Octave (version 5.2). The analyses were conducted on the same operating system, CentOS 7.3.
 % The computations were performed on a cluster comprised of ...
-We ensured that the software versions and all the requisites for running analyses used in all experiments 
-were similar to the original study and encapsulated in Docker images.
+We ensured that the software versions and all the requisites \tristan{unclear what these are} for running analyses used in all experiments 
+were similar to the original study and we encapsulated them in Docker container images.
 % We could replicate results of the original study except for AFNI with slightly differences due to the parallelization\dots
 % We also used SPM/Octave instead of Matlab to be able to run analysis in HPC and also perturb mathmetical functions
 % because Matlab has no dependencies on the GNU mathematical library, and it uses its libraries\dots
 
-In addition, the same subjects and fMRI analysis were processed with the same configurations in the Fuzzy libmath environment
+In addition, the same subjects and fMRI analysis were processed with the same configurations in the FL environment
 to produce the numerical variability results.
-We only perturbed the maximum precisions to compare uncertainty between tool variability and numerical instability at the level of OS.
-For this purpose, we applied instrumentations at the virtual precision (t) of 53 bits for the double-precision variable
-and 24 bits for the single-precision variable. Three Fuzzy samples were generated at these precisions to match the number of tool samples.
+We only perturbed the maximum precisions \tristan{``the maximum precisions'' cannot be understood} to compare uncertainty between tool variability and numerical instability at the level of OS.
+For this purpose, we applied instrumentations at the virtual precision (t) of 53 bits for double-precision floating-point values
+and 24 bits for  single-precision values. Three Fuzzy samples were generated, to match the number of tool samples.
 
-We evaluated variabilities in (un)thresholded group-level activation maps.
-We statistically computed standard deviations between T-statistic values for each pair of tools
-and then compared the correlation of changes in both conditions.
-The standard deviation between fuzzy samples corresponds to the square root of the summation of variances between samples in each tool.
-Moreover, we determined region-by-region Dice coefficients for the thresholded maps for each pair of tools.
+We evaluated variabilities \tristan{define them, introduce BT and WT acronyms} in thresholded and unthresholded group-level activation maps.
+We statistically computed \tristan{what's a ``statistical computation''?} voxel-wise standard deviations \tristan{did you check standard error vs standard deviation?} of T-statistic values for each pair of tools
+and then compared the correlation of changes \tristan{idk what's a ``correlation of changes''} in both conditions.
+The standard deviation between fuzzy samples corresponds to the square root of the summation of variances between samples in each tool \tristan{Rephrase: we computed the WT standard deviation as ...}.
+Moreover, we determined region-by-region Dice coefficients for the thresholded maps for each pair of tools \tristan{Explain more. You should add least mention the parcellation used.}.
 % This measured the overlap of acitaved voxels which assess the spatial similarity between activated maps.
 The Dice values between Fuzzy samples correspond to the average pair-wise Dices computed among three Fuzzy samples
 for each pair of tools.
@@ -257,22 +259,21 @@ Also, we compared the correlation of Dice scores normalized by the region sizes 
 
 
 \section{Results}
-All scripts and results to create the figures in this section are available on GitHub repository
-in \url{https://github.com/ali4006/fuzzy-neurotools}.
-Replication of all analyses was visually assessed to be the same as the original study.
-We ensured that fMRI analyses were processed successfully.
+All scripts and results to create the figures in this section are available at \url{https://github.com/ali4006/fuzzy-neurotools}.
+Replication of all analyses was visually assessed \tristan{mention what you checked specifically} to be the same as the original study \tristan{cite}.
+We ensured that fMRI analyses were processed successfully \tristan{how?}.
 In this section, we call the cross-software variation and numerical variation,
-between tool (BT) and within tool (WT) variability, respectively. 
-The within tool variability shows results among different fuzzy libmath
-samples for the specific version of the tools, and it is not within tool versions.c
+between tool (BT) and within tool (WT) variability, respectively \tristan{introduce these notations as early as possible in the methods}. 
+The within tool variability shows results among different fuzzy libmath \tristan{capitalize consistently}
+samples for the specific version of the tools, and it is not within tool versions \tristan{sentence is cryptic}.
 
-A summary of the statistic values from the group-level (un)thresholded T-statistics is conducted in
+Summary statistics for the group-level (un)thresholded T-statistics are shown in
 Table~\ref{table:pipeline-stats}.
-The variability between pair of images in each condition was measured using the mean and standard deviation of absolute differences.
+The variability between pair of images \tristan{images means MRI} in each condition was measured using the mean and standard deviation of absolute differences \tristan{then call them abs diff in the table}.
 Overall, the distribution of the pairwise variations in WT is an order of magnitude lower than BT in both means and standard deviations.
-While the most variability was observed in the pair of \fslafni, the pair of \fslspm made the least variations for all conditions.
+While the highest variability was observed for \fslafni, \fslspm made the least variations for all conditions.
 % Overally, we see that values in between tools are comparable to values in within tool results.
-
+\tristan{it's unclear what ``Fuzzy X and Y'' represent.}
 
 %%%%%%%%%% Summary of statstics %%%%%%%%
 \setlength{\tabcolsep}{5pt}
@@ -295,7 +296,7 @@ While the most variability was observed in the pair of \fslafni, the pair of \fs
         Fuzzy AFNI and SPM   &  0.011       & 0.458      & 0.033     & 0.144  \\
         \bottomrule
     \end{tabular}
-    \caption{Summary of T-statistics mean and standard deviation of differences for each pair of tools.}
+    \caption{Summary of T-statistics mean and standard deviation of differences for each pair of tools \tristan{only pairs of tools? Add voxel-wise to this caption.}.}
     \label{table:pipeline-stats}
 \end{table}
 
