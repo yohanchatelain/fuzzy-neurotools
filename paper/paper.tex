@@ -111,23 +111,23 @@ This comparative study reveals the importance of numerical variability and motiv
 
 \subsection{Fuzzy libmath environment}
 
-To simulate uncertainty close to the level of machine error,
-the maximum relative error due to rounding in floating-point arithmetic,
-we used the method introduced in~\cite{salari2021accurate}
-called Fuzzy libmath (FL). FL uses MCA to
-% create an instrumented version of the functions embedded in the mathematical library in GNU operating systems (libmath) in which
-introduce a controlled amount of noise in the floating-point operations embedded
-in the mathematical library in GNU operating systems (libmath)
-through the following perturbation model:
+For our analyses, we used the Fuzzy libmath (FL) library introduced in~\cite{salari2021accurate}, an MCA-instrumented 
+version of the mathematical library in GNU operating systems (libmath).
+Using FL, we can simulate numerical variability at the level of machine error, the floating-point rounding error
+caused by floating-point representation limits defined by the hardware.
+
+FL works based on the MCA, a floating-point arithmetic that simulates roundoff and catastrophic cancellation errors
+by introducing a controlled amount of noise in the floating-point operations 
+through the following perturbation model~\cite{Parker1997-qq}:
+
 \begin{equation} \label{eq:mca_inexact}
   inexact(x) = x + 2^{e_x-t}\xi
 \end{equation}
+
 where $e_x$ is the exponent in the floating-point representation of $x$,
 $t$ is the virtual precision, the number of bits in mantissa that will not be perturbed,
 and $\xi$ is a random uniform variable of $(-\frac{1}{2}, \frac{1}{2})$.
-The perturbation is applied in a given number of least-significant bits,
-which models floating-point rounding and catastrophic cancellation errors.
-This is automated using Verificarlo tool~\cite{denis2015verificarlo} that implements MCA at compilation time.
+The MCA perturbations are automated using Verificarlo tool~\cite{denis2015verificarlo} at compilation time.
 
 The instrumented functions are loaded in the pipeline using LD\_PRELOAD, a Linux environment variable
 to force load a shared library into an executable. This allows functions defined in FL to transparently
@@ -238,9 +238,7 @@ To capture variability in BT, the fMRI analysis pipeline was processed using thr
 packages in neuroimaging, including FSL (version 5.0.10), AFNI (version 18.1.09), and SPM (version SPM12, r7771)
 executed with GNU/Octave (version 5.2). 
 FSL and AFNI scripts were executed in Python 2.7. We also used a fixed number of 7 threads in AFNI executions
-to produce the similar results to the original study in a feasible execution time.
-We also executed SPM with Octave instead of Matlab to enable GNU mathematical library instrumentations
-since Matlab uses its built-in mathematical functions.
+to reproduce similar results to the original study in a feasible execution time.
 All the analyses were conducted on the same operating system, CentOS 7.3.
 We ensured that the software versions used in all experiments were similar to the original study,
 and encapsulated them in Docker container images with available Dockerfiles at \url{https://github.com/ali4006/fuzzy-neurotools/tree/main/dockerfile}.
@@ -251,17 +249,17 @@ We applied instrumentations at the virtual precision (t) of 53 bits for double-p
 and 24 bits for single-precision values. Three Fuzzy samples were generated, to match the number of tool samples.
 
 We evaluated WT and BT variabilities in thresholded and unthresholded group-level activation maps.
-We computed voxel-wise standard deviations
-\tristan{did you check standard error vs standard deviation?}\ali{STD shows variability of data in relation to the mean (what we are looking for here),
-while SE is a type of STD (computed as $\frac{\sigma}{\sqrt{n}}$) for distribution of means (we use it when we are interested in the precision of means in different samples).} of T-statistic values for each pair of tools
+We computed voxel-wise standard deviations of T-statistic values for each pair of tools
 and then compared the distribution of standard deviations in both conditions.
 We computed the WT standard deviation as the square root of the summation of variances between samples in each tool.
 Moreover, we determined region-by-region Dice coefficients for the thresholded maps for each pair of tools.
 We characterized 360 regions that correspond to the cortical parcellation atlas
 in Human Connectome Project Multi-Modal Parcellation version 1.0 (HCP-MMP1.0)~\cite{glasser2016multi}.
-We computed the WT Dice values as the average pair-wise Dices computed among three Fuzzy samples for each pair of tools.
+Dice values in WT are computed as the average pair-wise Dices among three Fuzzy samples for each pair of tools.
 Also, we compared the correlation of Dice scores normalized by the region sizes in both conditions.
-% This measured the overlap of acitaved voxels which assess the spatial similarity between activated maps.
+
+\tristan{did you check standard error vs standard deviation?}\ali{STD shows variability of data in relation to the mean (what we are looking for here),
+while SE is a type of STD (computed as $\frac{\sigma}{\sqrt{n}}$) for distribution of means (we use it when we are interested in the precision of means in different samples).}
 
 
 \section{Results}
@@ -278,10 +276,11 @@ the availability of input data and execution units to use resources efficiently.
 compute floating-point operations in a different order, which often leads to different results.
 
 Summary statistics for the group-level (un)thresholded T-statistics are shown in Table~\ref{table:pipeline-stats}.
-The variability between results of each pair of tools in each condition was measured using the mean and standard deviation of absolute differences.
+The variability between results of each pair of tools in BT and indivisual tool in WT was measured using the mean and standard deviation of absolute differences.
 Overall, the distribution of the pairwise variations in WT is an order of magnitude lower than BT in both means and standard deviations.
 While the highest variability was observed for \fslafni, \fslspm made the least variations for all conditions.
-% Overally, we see that values in between tools are comparable to values in within tool results.
+Results show that AFNI generated the most variability in WT out of three tools.
+
 
 %%%%%%%%%% Summary of statstics %%%%%%%%
 \setlength{\tabcolsep}{7pt}
@@ -294,14 +293,14 @@ While the highest variability was observed for \fslafni, \fslspm made the least 
         {} & {} & Mean & Std. dev. & Mean & Std. dev. \\
         \midrule
         \rowcolor{lightgray}
-        {BT} & FSL vs. SPM          &  0.043       & 1.282      & 0.242     & 0.443  \\
+        {BT} & FSL vs. SPM        &  0.043       & 1.282      & 0.242     & 0.443  \\
         \rowcolor{lightgray}
         {} & FSL vs. AFNI         &  0.099       & 1.548      & 0.302     & 0.547  \\
         \rowcolor{lightgray}
         {} & AFNI vs. SPM         &  0.079       & 1.475      & 0.254     & 0.608  \\
-        {WT} & FSL and SPM    &  0.005       & 0.358      & 0.030     & 0.099  \\
-        {} & FSL and AFNI   &  0.011       & 0.475      & 0.038     & 0.155  \\
-        {} & AFNI and SPM   &  0.011       & 0.458      & 0.033     & 0.144  \\
+        {WT} & FSL    &  0.005       & 0.354      & 0.034     & 0.082  \\
+        {}   & SPM    &  0.006       & 0.252      & 0.025     & 0.054  \\
+        {}   & AFNI   &  0.017       & 0.434      & 0.041     & 0.128  \\
         \bottomrule
     \end{tabular}
     \caption{Summary of voxel-wise mean and standard deviation of absolute differences for each pair of tools
@@ -317,7 +316,6 @@ While the highest variability was observed for \fslafni, \fslspm made the least 
 %Fig 1
 Comparisons of standard deviations between thresholded images in WT and BT
 on MNI space are shown in Figure~\ref{fig:thresh-maps}.
-
 While we observe substantial variations in BT with the average standard deviation $\approx$ 1.5,
 the order of magnitude of variations in WT is much lower with the average standard deviation $\approx$ 0.5,
 as was anticipated. However, numerical variability is still significant in WT results.
@@ -445,64 +443,25 @@ which indicates how correlation is uniformly distributed across the brain.
 
   \subsection{Subject-level unthresholded maps}
 
-  Table~\ref{table:firstlevel-stats} shows a summary of the statistics from the subject-level analysis results.
-  This table represents the average of the mean and standard deviation of absolute differences of unthresholded T-statistics
-  across 16 subjects for each pair of tools.
-  Results show the subjects that were produced the least and the most variability among all pairs, subjects,
-  and both BT and WT.
-  While the subject with the least variability generated results with the mean of $\approx$ 0.093 and standard deviation of $\approx$ 0.174,
-  the subject with the most variability produced results with the mean of $\approx$ 0.183 and standard deviation of $\approx$ 0.341.
-  This observation shows an order of magnitude of variability between subjects.
+  % Table~\ref{table:firstlevel-stats} shows a summary of the statistics from the subject-level analysis results.
+  % This table represents the average of the mean and standard deviation of absolute differences of unthresholded T-statistics
+  % across 16 subjects for each pair of tools.
+  % Results show the subjects that were produced the least and the most variability among all pairs, subjects,
+  % and both BT and WT.
+  % While the subject with the least variability generated results with the mean of $\approx$ 0.093 and standard deviation of $\approx$ 0.174,
+  % the subject with the most variability produced results with the mean of $\approx$ 0.183 and standard deviation of $\approx$ 0.341.
+  % This observation shows an order of magnitude of variability between subjects.
+
   % The most variability for \fslspm appeared in subject 1 in BT and subject 11 in WT, and for \fslafni
   % and \afnispm subject 10 in BT and subject 5 in WT were the most variable subjects.
   % Moreover, Figure~\ref{fig:unthresh-firstlevel} shows the maps of standard deviations on MNI space in WT and BT for subjects 15 and 10.
   % We can see a significant variability between subjects.
 
-  Moreover, Figure~\ref{fig:unthresh-maps-sbj} shows the maps of standard deviations on MNI space in WT and BT from T-statistics of
+  Figure~\ref{fig:unthresh-maps-sbj} shows the maps of standard deviations on MNI space in WT and BT from T-statistics of
   the subject with the highest WT variability.
   The average standard deviations in WT and BT are $\approx$ 0.152 and $\approx$ 0.466, respectively.
   The maps show regions in the brain where the magnitude of standard deviation exceeds 1.0 in WT in \fslafni and \afnispm,
   such as the parts in the frontal and occipital lobes.
-
-
-
-%%%%%%%%%% Summary of statstics %%%%%%%%
-\setlength{\tabcolsep}{5pt}
-\begin{table*}[h]
-    \centering
-    \begin{tabular}{cccc|cc|cc}
-        \toprule
-        \multirow{2}{*}{} &{} & \multicolumn{2}{c}{All Subjects} & \multicolumn{2}{c}{Least variable} & \multicolumn{2}{c}{Most variable} \\
-        \cmidrule{3-4} \cmidrule{5-6} \cmidrule{7-8} \\
-        {} & {} & Mean  & Std. dev.  & Mean & Std. dev. & Mean  & Std. dev. \\
-        \midrule
-        \rowcolor{lightgray}
-        {BT} & FSL vs. SPM           & 0.245     & 0.366       & 0.166     & 0.255    & 0.273    & 0.405  \\
-        \rowcolor{lightgray}
-        {}   & FSL vs. AFNI          & 0.295     & 0.439      & 0.183     & 0.282     & 0.392    & 0.582  \\
-        \rowcolor{lightgray}
-        {}   & AFNI vs. SPM          & 0.238     & 0.491      & 0.150     & 0.314     & 0.310    & 0.642  \\
-        {WT} & FSL and SPM    & 0.033     & 0.092      & 0.018     & 0.050     & 0.036    & 0.099  \\
-        {}   & FSL and AFNI   & 0.040     & 0.136      & 0.021     & 0.075     & 0.048    & 0.165  \\
-        {}   & AFNI and SPM   & 0.033     & 0.124      & 0.019     & 0.071     & 0.039    & 0.155  \\
-        \bottomrule
-    \end{tabular}
-    \caption{Summary of voxel-wise mean and standard deviation of absolute differences for each pair of tools
-    in subject-level T-statistics.}
-    \label{table:firstlevel-stats}
-\end{table*}
-
-
-  % %%%%%%%%%% Var. of Unthresh %%%%%%%%
-  % \begin{figure*}[b]
-  %   \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
-  %     \centering
-  %     \includegraphics[width=\textwidth]{figures/sbj-level-bt-wt-unthresh-std.pdf}
-  %   \caption{Maps of standard deviation of unthresholded T-statistics from subject 15 in the rows A and B,
-  %   and subject 10 in the rows C and D.}
-  %   \label{fig:unthresh-firstlevel}
-  %   \end{minipage}}
-  % \end{figure*}
 
 
   %%%%%%%%%% Var. of Unthresh sbj05%%%%%%%%
@@ -525,7 +484,10 @@ which indicates how correlation is uniformly distributed across the brain.
   \end{minipage}}
 \end{figure*}
 
+\subsection{Global nearest precision}
 
+\ali{Add results at global nearest precision.}
+  
 \section{Conclusion \& Discussion}
 
 % There are many statistical comparisons, but the neuro-scientific interpretation of results is not on my side.
