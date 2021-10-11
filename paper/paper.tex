@@ -28,6 +28,13 @@
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
+
+\makeatletter
+  \def\footnoterule{\kern-3\p@
+  \hrule \@width 2in \kern 2.6\p@} % the \hrule is .4pt high
+\makeatother
+
+
 \begin{document}
 
 \newcommand{\fslspm}{FSL-SPM\xspace}
@@ -267,19 +274,20 @@ All scripts and results to create the figures in this section are available at \
 The computations were performed on \href{https://www.computecanada.ca}{the Compute Canada's} Béluga cluster
 with 872 available nodes containing 2× Intel Gold 6148 Skylake @ 2.4 GHz (40 cores/node) CPU and node memory ranging from 92 to 752 GB.
 
-We ensured that fMRI analyses were replicated successfully by comparing the result images of the group-level analysis.
-We visually checked the result images to be the same as the original study~\cite{bowring2019exploring}.
-We could replicate the original results with an exception for AFNI with slight differences which might be caused by the hardware variations,
-or the compilation instabilities such as out-of-order execution (dynamic scheduling) paradigm~\cite{duben2014use,demmel2013numerical}.
+We ensured that fMRI analyses were replicated successfully compared to the original results in~\cite{bowring2019exploring}
+by visually checking the overlap of T-statistic images resulted from the group-level analysis.
+We could replicate the analyses across tools with an exception for AFNI that produced results with slight differences; 
+this might be caused by the compiler variations, or different hardware and their optimizations
+such as out-of-order execution (dynamic scheduling) paradigm~\cite{duben2014use,demmel2013numerical}.
 In this paradigm, the processors might execute instructions out of the original order they appear based on
 the availability of input data and execution units to use resources efficiently. Therefore, it might
 compute floating-point operations in a different order, which often leads to different results.
 
-Summary statistics for the group-level (un)thresholded T-statistics are shown in Table~\ref{table:pipeline-stats}.
-The variability between results of each pair of tools in BT and indivisual tool in WT was measured using the mean and standard deviation of absolute differences.
-Overall, the distribution of the pairwise variations in WT is an order of magnitude lower than BT in both means and standard deviations.
-While the highest variability was observed for \fslafni, \fslspm made the least variations for all conditions.
-Results show that AFNI generated the most variability in WT out of three tools.
+Summary statistics for the group-level (un)thresholded T-statistics are reported in Table~\ref{table:pipeline-stats}.
+The variability between results of each pair of tools in BT and individual tools in WT was measured using the mean and standard deviation of absolute differences.
+Overall, the distribution of variations in WT was an order of magnitude lower than BT in both means and standard deviations.
+While the highest variability was observed in \fslafni, \fslspm was made the least variations in BT.
+Results also show that AFNI was generated the most variability in WT among the three tools.
 
 
 %%%%%%%%%% Summary of statstics %%%%%%%%
@@ -303,8 +311,7 @@ Results show that AFNI generated the most variability in WT out of three tools.
         {}   & AFNI   &  0.017       & 0.434      & 0.041     & 0.128  \\
         \bottomrule
     \end{tabular}
-    \caption{Summary of voxel-wise mean and standard deviation of absolute differences for each pair of tools
-    in group-level T-statistics.}
+    \caption{Summary of voxel-wise mean and standard deviation of absolute differences in group-level T-statistics in BT and WT.}
     \label{table:pipeline-stats}
 \end{table}
 
@@ -316,43 +323,36 @@ Results show that AFNI generated the most variability in WT out of three tools.
 %Fig 1
 Comparisons of standard deviations between thresholded images in WT and BT
 on MNI space are shown in Figure~\ref{fig:thresh-maps}.
-While we observe substantial variations in BT with the average standard deviation $\approx$ 1.5,
-the order of magnitude of variations in WT is much lower with the average standard deviation $\approx$ 0.5,
-as was anticipated. However, numerical variability is still significant in WT results.
+While we observed substantial variations in BT with the average standard deviation $\approx$ 1.5,
+the magnitude of variations in WT was much lower with the average standard deviation $\approx$ 0.5,
+as was anticipated. However, numerical variability was still significant in WT results.
 %Moreover, the numerical perturbations produces variations in similar order og magnitude in WT compared to BT variations
-Moreover, we see the similar order of magnitude in WT variations compared to BT variations
+Moreover, we obtained a similar order of magnitude in WT variations compared to BT variations
 in some regions in the thresholded images.
-\ali{For instance, some parts of the frontal lobe in the sagittal plane for almost all pairs and the occipital
+For instance, some parts of the frontal lobe in the sagittal plane for all pairs and the occipital
 lobe in the axial plane for the pairs of \fslspm and \fslafni in Figure~\ref{fig:thresh-maps}
-are closely replicated using the numerical perturbations.}
+were closely replicated by the numerical perturbations.
 
 % Fig2
-In Figure~\ref{fig:dice-thresh}, we compare region-by-region Dice coefficients of
+In Figure~\ref{fig:dice-thresh}, we compared region-by-region Dice coefficients of
 the group-level thresholded maps for all pairs of software packages in BT and WT.
 This shows a linear correlation between Dice values in BT and WT,
-which implies that the variability of activated voxels in both conditions is similar.
+which implies that the variability of activated voxels in both conditions was similar.
 Also, small P-values across all three pairs, including \num{1e-10} for \fslafni, \num{6e-04} for \fslspm,
-and \num{2e-05} for \afnispm, confirms this correlation of similarities.
-The vertical line where the Dice score is zero in BT shows regions in the brain with no overlaps between activated voxels in BT but WT,
-including left/right `V1\_ROI' in \fslafni and \fslspm, and left/right `TGd\_ROI' in \afnispm results.
+and \num{2e-05} for \afnispm, confirmed this correlation of similarities.
+The vertical line where the Dice score is zero in BT demonstrates regions in the brain with no overlaps between activated voxels in BT but WT,
+including left/right `V1\_ROI'\footnote{The primary visual cortex} in \fslafni and \fslspm,
+and left/right `TGd\_ROI'\footnote{The area TG dorsal (part of lateral temporal cortex)} in \afnispm results.
 
 
 %%%%%%%%%% Var. of Thresh %%%%%%%%
 \begin{figure*}[ht]
     \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
-    \begin{subfigure}[t]{\textwidth}
       \centering
-      \includegraphics[width=\textwidth]{figures/bt-wt-thresh-std.pdf}
+      \includegraphics[width=\textwidth]{figures/std/gl-thresh.png}
       %\caption{Standard deviation of thresholded t-statistics map on template surface}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[t]{\textwidth}
-      \centering
-      \includegraphics[width=\textwidth]{figures/ratio-thresh-std.pdf}
-      %\caption{Standard deviation of thresholded t-statistics map on template surface}
-    \end{subfigure}
     \caption{Maps of standard deviation of thresholded T-statistics. The first and second rows show
-    maps on BT and WT results, respectively, and the third row represents maps of the ratio between them.}
+    maps on BT and WT results, respectively, and the third row represents maps of their differences.}
     % so that bright blue areas indicate more similar order of magnitude of variations in both conditions,
     %and vise versa for the darkder regions.}
     \label{fig:thresh-maps}
@@ -361,7 +361,7 @@ including left/right `V1\_ROI' in \fslafni and \fslspm, and left/right `TGd\_ROI
 
 
   %%%%%%%%%% Dice plot of thresholded tstats%%%%%%%%
-  \begin{figure}[b]
+  \begin{figure}[ht]
     \fbox{\begin{minipage}{\dimexpr \columnwidth-2\fboxsep-2\fboxrule}
     \centering
     \includegraphics[width=\columnwidth]{figures/dices_corr.png}
@@ -379,28 +379,20 @@ including left/right `V1\_ROI' in \fslafni and \fslspm, and left/right `TGd\_ROI
 
 % Fig3
 Figure~\ref{fig:unthresh-maps} shows the brain maps of standard deviations for group-level unthresholded T-statistics in WT and BT.
-Results show a different magnitude of
-the order of variations in WT and BT with standard deviation ranges from $\approx$ 0.12 to $\approx$ 0.5 on average, respectively.
-The maps show regions in the brain where the magnitude of standard deviation is close to zero in WT but it exceeds 2.0 in BT,
-such as the limbic and frontal lobes in the sagittal plane.
-However, there are voxels with a significant correlation between WT and BT that are uniformly distributed across the brain maps.
+Results show a different order of magnitude of variations in WT and BT with standard deviation
+of $\approx$ 0.12 and $\approx$ 0.5 on average, respectively.
+We observed regions in the brain where the magnitude of standard deviation was close to zero in WT, but it exceeded 2.0 in BT,
+such as some parts of the limbic and frontal lobes in the sagittal plane.
+However, the brain maps included voxels with approximately zero differences of standard deviations in WT and BT, which are uniformly distributed.
 
 %%%%%%%%%% Var. of Unthresh %%%%%%%%
-\begin{figure*}[b]
+\begin{figure*}[ht]
     \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
-    \begin{subfigure}[t]{\textwidth}
       \centering
-      \includegraphics[width=\textwidth]{figures/bt-wt-unthresh-std.pdf}
+      \includegraphics[width=\textwidth]{figures/std/gl-unthresh.png}
       %\caption{Standard deviation of thresholded t-statistics map on template surface}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[t]{\textwidth}
-      \centering
-      \includegraphics[width=\textwidth]{figures/ratio-unthresh-std.pdf}
-      %\caption{Standard deviation of thresholded t-statistics map on template surface}
-    \end{subfigure}
     \caption{Maps of standard deviation of unthresholded T-statistics. The first and second rows show
-    maps on BT and WT results, respectively, and the third row represents maps of the ratio between them.}
+    maps on BT and WT results, respectively, and the third row represents maps of their differences.}
     \label{fig:unthresh-maps}
     \end{minipage}}
   \end{figure*}
@@ -409,27 +401,27 @@ However, there are voxels with a significant correlation between WT and BT that 
 % Fig4
 The scatter plot in Figure~\ref{fig:unthresh-correlation} represents the correlation of standard deviation in WT and BT variability.
 We found two major clusters, including the identity cluster that corresponds to the correlations
-between BT and WT with the ratio of $0.5 < BT/WT < 2$ where the standard deviations are bigger than 0.1,
+between BT and WT with the ratio of $0.5 < BT/WT < 2$ where the standard deviations were bigger than 0.1,
 and the upper cluster that shows voxels where BT $\approx$ 0.
-The percentage of voxels included in the identity cluster is \%9.9 in \fslspm, \%17.3 in \fslafni, and \%13.8 in \afnispm,
-and in the upper cluster is $\approx$ \%1 for each pair of tools.
+The percentage of voxels included in the identity cluster was \%9.9 in \fslspm, \%17.3 in \fslafni, and \%13.8 in \afnispm,
+and in the upper cluster was $\approx$ \%1 for each pair of tools.
 The identity area is also represented on the MNI space in the second row in Figure~\ref{fig:unthresh-correlation}.
-This figure shows the spatial localization of the parts of the brain that BT variability is correlated with the numerical variability.
+This figure shows the spatial localization of the parts of the brain that BT variability was correlated with the numerical variability.
 This refines the presented results in Figure~\ref{fig:unthresh-maps},
-which indicates how correlation is uniformly distributed across the brain.
+which indicated how the correlation is uniformly distributed across the brain.
 
   %%%%%%%%%% Corr. plot of tstats%%%%%%%%
-  \begin{figure*}[b]
+  \begin{figure*}[ht]
     \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
-      \begin{subfigure}[t]{\textwidth}
+      \begin{subfigure}[ht]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/std-corr-unthresh-plot.png}
         %\caption{Standard deviation of thresholded t-statistics map on template surface}
       \end{subfigure}
       \hfill
-      \begin{subfigure}[t]{\textwidth}
+      \begin{subfigure}[ht]{\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{figures/corr-unthresh-std.pdf}
+        \includegraphics[width=\textwidth]{figures/std/correlated-unthresh.png}
         %\caption{Standard deviation of thresholded t-statistics map on template surface}
       \end{subfigure}
       \caption{Correlation of standard deviations in BT and WT from the unthresholded T-statistics.
@@ -452,53 +444,94 @@ which indicates how correlation is uniformly distributed across the brain.
   % the subject with the most variability produced results with the mean of $\approx$ 0.183 and standard deviation of $\approx$ 0.341.
   % This observation shows an order of magnitude of variability between subjects.
 
-  % The most variability for \fslspm appeared in subject 1 in BT and subject 11 in WT, and for \fslafni
-  % and \afnispm subject 10 in BT and subject 5 in WT were the most variable subjects.
-  % Moreover, Figure~\ref{fig:unthresh-firstlevel} shows the maps of standard deviations on MNI space in WT and BT for subjects 15 and 10.
-  % We can see a significant variability between subjects.
-
-  Figure~\ref{fig:unthresh-maps-sbj} shows the maps of standard deviations on MNI space in WT and BT from T-statistics of
-  the subject with the highest WT variability.
-  The average standard deviations in WT and BT are $\approx$ 0.152 and $\approx$ 0.466, respectively.
-  The maps show regions in the brain where the magnitude of standard deviation exceeds 1.0 in WT in \fslafni and \afnispm,
-  such as the parts in the frontal and occipital lobes.
+  In addition to the group-level analysis, we evaluated WT and BT variabilities between subjects individually.
+  Figure~\ref{fig:unthresh-maps-sbj} shows the brain maps of standard deviations in WT and BT from unthresholded T-statistics of
+  the subject with the highest WT variability among all 16 subjects.
+  The average standard deviation for this subject in WT and BT was $\approx$ 0.152 and $\approx$ 0.466, respectively.
+  The maps show regions in the brain where the magnitude of standard deviation exceeded 1.0 in WT in \fslafni and \afnispm,
+  such as areas in the frontal and occipital lobes.
+  This is similar to BT variability, even with higher variations in some voxels.
 
 
   %%%%%%%%%% Var. of Unthresh sbj05%%%%%%%%
-\begin{figure*}[b]
+\begin{figure*}[ht]
   \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
-  \begin{subfigure}[t]{\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{figures/sbj05-bt-wt-unthresh-std.pdf}
+    \includegraphics[width=\textwidth]{figures/std/sbj05-std.png}
     %\caption{Standard deviation of thresholded t-statistics map on template surface}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[t]{\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{figures/sbj05-ratio-unthresh-std.pdf}
-    %\caption{Standard deviation of thresholded t-statistics map on template surface}
-  \end{subfigure}
   \caption{Maps of standard deviation of unthresholded T-statistics in subject 5. The first and second rows show
-  maps on BT and WT results, respectively, and the third row represents maps of the ratio between them.}
+  maps on BT and WT results, respectively, and the third row represents maps of their differences.}
   \label{fig:unthresh-maps-sbj}
   \end{minipage}}
 \end{figure*}
 
-\subsection{Global nearest precision}
+\subsection{WT variability across virtual precisions}
 
-\ali{Add results at global nearest precision.}
+We evaluated WT variability across different virtual precisions for FSL tool.
+We changed the virtual precision in steps of 2 between t=1 and t=53 bits.
+Figure~\ref{fig:across-precisions} represents RMSE between standard deviations of each pair of tools in BT and FSL variations across virtual precisions in WT.
+%Consistant with the previous results, 
+RMSE between WT and BT for \fslafni was the highest, and \fslspm was the lowest in all virtual precisions.
+This also shows the similar plateaus were generated in all three pairs of tools.
+Moreover, the analyses crashed for the precisions below t=11 bits during the FSL preprocessing steps. 
+This needs further investigations to understand the exact failure reasons. 
+
+We determined the virtual precision of t=27 bits as the precision that minimized the RMSE between standard deviations in BT on average and WT.
+This is the precision that numerical perturbations in FSL more closely simulated BT variability.
+Figure~\ref{fig:gnp-mni} shows the brain maps of numerical variability obtained from the analysis with FSL at t=27 bits.
+This represents regions with significant variability in the frontal, parietal, and limbic lobes.
+
+  %%%%%%%%%% plot different precisions%%%%%%%%
+  \begin{figure}[ht]
+    \fbox{\begin{minipage}{\dimexpr \columnwidth-2\fboxsep-2\fboxrule}
+        \centering
+        \includegraphics[width=\columnwidth]{figures/rmse-precisions.png}
+        %\caption{Standard deviation of thresholded t-statistics map on template surface}
+      \caption{Comparison of RMSE values computed between BT and WT resulted from FSL tool for different virtual precisions.}
+    \label{fig:across-precisions}
+    \end{minipage}}
+  \end{figure}
+
   
-\section{Conclusion \& Discussion}
+  %%%%%%%%%% plot different precisions%%%%%%%%
+  \begin{figure}[ht]
+    \fbox{\begin{minipage}{\dimexpr \columnwidth-2\fboxsep-2\fboxrule}
+        \centering
+        \includegraphics[width=\columnwidth]{figures/bt-wt.png}
+        %\caption{Standard deviation of thresholded t-statistics map on template surface}
+      \caption{Comparison of standard deviations in BT averaged across pairs of tools and WT resulted from FSL tool
+      at the virtual precision of t=27 bits.}
+    \label{fig:gnp-mni}
+    \end{minipage}}
+  \end{figure}
+
+
+
+\section{Discussion}
+
+\begin{itemize}
+
+  \item[$\bullet$ ] In this study, we represented the magnitude of differences in BT and WT results.
+  We obtained more instability in BT compared to WT. Also we showed how between tool variations
+  are correlated with numerical variability.
+  While we only perturbed basic mathematical functions, perturbing linear algebra, in particular, could increase WT variability.
+
+  \item[$\bullet$ ] Generally, we obtained more uncertainty on thresholded results, probably due to different thresholding
+  methods used in different tools. This can raise further investigations on the thresholding techniques toward stability.
+  Also, we obtained significant instabilities in specific subjects so that healed by averaging in group-level analyses.
+
+  \item[$\bullet$ ] We showed that reducing the number of virtual precision bits leads to more instabnilities in which can exceeds variability compared to BT.
+  We also showed the numerical perturbations can perfectly simulate BT variability in some regions. 
+   
+\end{itemize}
+
+
 
 % There are many statistical comparisons, but the neuro-scientific interpretation of results is not on my side.
 
-\begin{itemize}
-    \item[$\bullet$ ] In this study, we represented the magnitude of differences in between tool and within tool results.
-    We obtained more instability in BT compared to WT. Also we showed how between tool variations
-    are correlated with numerical variability.
+\section{Conclusion}
 
-    \item[$\bullet$ ] Generally, we obtained more uncertainty on thresholded results, probably due to different thresholding
-    methods used in different tools. This can raise further investigations on the thresholding techniques toward stability.
+\begin{itemize}
 
     \item[$\bullet$ ] Further studies can be evaluating the numerical stabilities within tool by focusing on the particular parts of
     the pipeline that has been identified as the main sources of variations in~\cite{bowring2021isolating}.
