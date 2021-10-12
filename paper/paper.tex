@@ -116,92 +116,29 @@ This comparative study reveals the importance of numerical variability and motiv
 
 \section{Materials and Methods}
 
-\subsection{Fuzzy libmath environment}
-
-For our analyses, we used the Fuzzy libmath (FL) library introduced in~\cite{salari2021accurate}, an MCA-instrumented 
-version of the mathematical library in GNU operating systems (libmath).
-Using FL, we can simulate numerical variability at the level of machine error, the floating-point rounding error
-caused by floating-point representation limits defined by the hardware.
-
-FL works based on the MCA, a floating-point arithmetic that simulates roundoff and catastrophic cancellation errors
-by introducing a controlled amount of noise in the floating-point operations 
-through the following perturbation model~\cite{Parker1997-qq}:
-
-\begin{equation} \label{eq:mca_inexact}
-  inexact(x) = x + 2^{e_x-t}\xi
-\end{equation}
-
-where $e_x$ is the exponent in the floating-point representation of $x$,
-$t$ is the virtual precision, the number of bits in mantissa that will not be perturbed,
-and $\xi$ is a random uniform variable of $(-\frac{1}{2}, \frac{1}{2})$.
-The MCA perturbations are automated using Verificarlo tool~\cite{denis2015verificarlo} at compilation time.
-
-The instrumented functions are loaded in the pipeline using LD\_PRELOAD, a Linux environment variable
-to force load a shared library into an executable. This allows functions defined in FL to transparently
-overload the original ones without the need to modify or recompile the analysis pipeline.
-
-To avoid some pitfalls in deterministic arithmetics like producing results out of the function definition,
-FL instruments the functions by wrapping them so that only the original functions' output
-is perturbed instead of input or their implementation.
-Listing~\ref{algo:wrapper} shows an example of this wrapping for the log function in both single and double precisions.
-In this script, the original functions are called by \texttt{dlsym},
-a function that returns the memory address of a symbol using the handle of \texttt{RTLD\_NEXT}.
-This allows one to provide a wrapper around a function in another shared library.
-Also, the MCA instrumentation is activated by adding a floating-point zero to the output of the original function
-so that the result of this summation is perturbed and returned.
-
-
-% \lstdefinestyle{customc}{
-%   belowcaptionskip=1\baselineskip,
-%   breaklines=true,
-%   frame=L,
-%   xleftmargin=\parindent,
-%   language=C,
-%   showstringspaces=false,
-%   basicstyle=\footnotesize\ttfamily,
-%   keywordstyle=\bfseries\color{green!40!black},
-%   commentstyle=\itshape\color{purple!40!black},
-%   identifierstyle=\color{blue},
-%   stringstyle=\color{orange},
-% }
-
-\lstdefinestyle{customasm}{
-  belowcaptionskip=1\baselineskip,
-  frame=L,
-  xleftmargin=\parindent,
-  language=[x86masm]Assembler,
-  basicstyle=\footnotesize\ttfamily,
-  commentstyle=\itshape\color{purple!40!black},
-}
-\lstinputlisting[caption=Sample wrapper script, label=algo:wrapper, style=customasm]{wrapper.c}
-%\lstinputlisting[caption=Scheduler, style=customc]{../wrapper2.c}
-
-FL allows measuring the effect of numerical variability by running a program multiple times
-with the feature of controlling the magnitude of the perturbations as perceived by the application.
-FL enables us to assess the software packages that are dynamically linked to the mathematical library.
-So, it is important to trace the tool dependencies of the pipelines to understand the different libraries
-involved during the pipeline executions.
-
-
 \subsection{fMRI analysis \& Dataset}
 
-We replicated the fMRI analysis described as study `ds000001' in~\cite{bowring2019exploring}, relying on
-the data publicly available in OpenNeuro at \url{https://openneuro.org/datasets/ds000001}
-and using the three main software packages for fMRI data processing, namely
-FMRIB Software Library (FSL)~\cite{jenkinson2012fsl}, Analysis of Functional NeuroImages (AFNI)~\cite{cox1996afni},
-and Statistical Parametric Mapping(SPM)~\cite{penny2011statistical}.
-We selected this analysis because the methods and datasets were explicitly
-written to be accessible and reproducible. This enabled us to reanalyze fMRI experiments using the FL framework and
-compare WT and BT variabilities.
+We replicated the fMRI analysis described as study `ds000001'
+in~\cite{bowring2019exploring} \tristan{check if this dataset was acquired
+and analysed previously, and if so cite the original paper}, relying on the
+data publicly available in OpenNeuro at
+\url{https://openneuro.org/datasets/ds000001} and using the three main
+software packages for fMRI data processing, namely FMRIB Software Library
+(FSL)~\cite{jenkinson2012fsl}, Analysis of Functional NeuroImages
+(AFNI)~\cite{cox1996afni}, and Statistical Parametric
+Mapping(SPM)~\cite{penny2011statistical}. We selected this dataset because
+comparable analysis pipelines implemented in FSL, AFNI and SPM 
+were already published and extensively described in~\cite{bowring2019exploring}.
+Furthermore, the work in~\cite{bowring2019exploring} already evaluated the effect of tool variability for
+this dataset, which we intended to complement with the present quantification of numerical variability.
 
-In the selected study, 16 healthy adult subjects participated in the balloon analog risk task to measure
-risk-taking behavior over three scanning sessions.
-This study included preprocessing, first-level, and second-level analyses that were implemented with all three software.
-Table~\ref{table:pipeline-steps} shows the steps that were taken in the procedure of analyses for each tool in the original study.
-In the original study, a number of preprocessing steps widely accepted within the community, such as motion correction,
-segmentation, brain extraction, and registration, were applied in all analyses to ensure that results from each software
-package could be compared objectively.
-A full description of the pipelines implemented within three packages is presented in~\cite{bowring2019exploring,schonberg2012decreasing}.
+In the selected study, 16 healthy adult subjects participated in the
+balloon analog risk task \tristan{cite the task specifically} to measure
+risk-taking behavior over three scanning sessions \tristan{cite the
+original study (not Alex')}. We reused the preprocessing, first-level, and
+second-level analyses implemented by~\cite{bowring2019exploring} consistently across all three software packages using 
+widely accepted analytical steps. Table~\ref{table:pipeline-steps} summarizes the analytical steps in each pipeline.
+More details are available in~\cite{bowring2019exploring,schonberg2012decreasing} \tristan{cite only one ref, the one that gives the right details}.
 
 
 %%%%%%%%%% Summary of statstics %%%%%%%%
@@ -234,36 +171,106 @@ A full description of the pipelines implemented within three packages is present
         \hline
 
       \end{tabular}
-    \caption{Software processing steps. Table is adapted from~\cite{bowring2019exploring}.}
+    \caption{Software processing steps (adapted from~\cite{bowring2019exploring}).}
     \label{table:pipeline-steps}
 \end{table}
 
+\subsection{Fuzzy libmath environment}
 
+To introduce controlled amounts of numerical error in the analyses, we used the Fuzzy Libmath (FL) library~\cite{salari2021accurate}, an MCA-instrumented 
+version of the GNU mathematical library (libmath).
+Using FL, we can simulate numerical variability at the level of machine error \tristan{you really shouldn't put so much emphasis on machine error so early in the description. First, explain how FL works, then, say that you used it to simulate machine error but not only.}, the floating-point rounding error
+caused by floating-point representation limits defined by the hardware \tristan{this is a quite bad definition of machine error}.
+
+FL works based on the MCA, a floating-point arithmetic that simulates roundoff and catastrophic cancellation errors
+by introducing a controlled amount of noise in the floating-point operations 
+through the following perturbation model~\cite{Parker1997-qq}:
+
+\begin{equation} \label{eq:mca_inexact}
+  inexact(x) = x + 2^{e_x-t}\xi
+\end{equation}
+
+where $e_x$ is the exponent in the floating-point representation of $x$,
+$t$ is the virtual precision, the number of bits in mantissa that will not be perturbed,
+and $\xi$ is a random uniform variable of $(-\frac{1}{2}, \frac{1}{2})$.
+The MCA perturbations are automated using Verificarlo tool~\cite{denis2015verificarlo} at compilation time.
+
+The instrumented functions are loaded in the pipeline using LD\_PRELOAD, a Linux environment variable
+to force load a shared library into an executable. This allows functions defined in FL to transparently
+overload the original ones without the need to modify or recompile the analysis pipeline.
+
+FL only introduces perturbations in the output values of mathematical
+functions but not in their implementation. This is done by wrapping the original functions 
+and applying function \texttt{inexact} to their returned values.
+Listing~\ref{algo:wrapper} shows an example of this wrapping for the log function in both single and double precisions.
+In this script, the original functions are called by \texttt{dlsym},
+a function that returns the memory address of a symbol, in our case \texttt{RTLD\_NEXT}, the address of the next occurrence of the function.
+These wrappers are compiled with Verificarlo for each function. The MCA
+instrumentation is activated by adding a floating-point zero to the output
+of the original function so that this summation is instrumented.
+
+
+% \lstdefinestyle{customc}{
+%   belowcaptionskip=1\baselineskip,
+%   breaklines=true,
+%   frame=L,
+%   xleftmargin=\parindent,
+%   language=C,
+%   showstringspaces=false,
+%   basicstyle=\footnotesize\ttfamily,
+%   keywordstyle=\bfseries\color{green!40!black},
+%   commentstyle=\itshape\color{purple!40!black},
+%   identifierstyle=\color{blue},
+%   stringstyle=\color{orange},
+% }
+
+\lstdefinestyle{customasm}{
+  belowcaptionskip=1\baselineskip,
+  frame=L,
+  xleftmargin=\parindent,
+  language=[x86masm]Assembler,
+  basicstyle=\footnotesize\ttfamily,
+  commentstyle=\itshape\color{purple!40!black},
+}
+\lstinputlisting[caption=Sample wrapper script, label=algo:wrapper, style=customasm]{wrapper.c}
+%\lstinputlisting[caption=Scheduler, style=customc]{../wrapper2.c}
+
+FL allows measuring the effect of numerical variability by running a program multiple times, 
+resulting in multiple independent realizations of the same analysis. Each of these samples 
+are equally plausible estimates of the true numerical result. 
+
+FL enables us to assess the software packages that are dynamically linked to the mathematical library.
+So, it is important to trace the tool dependencies of the pipelines to understand the different libraries
+involved during the pipeline executions \tristan{this is not methods. Here you should report how you validated the instrumentation 
+of each pipeline: (1) dependency analysis, (2) runtime checks, etc}.
 \subsection{Data processing}
 
-To capture variability in BT, the fMRI analysis pipeline was processed using three of the most popular software
-packages in neuroimaging, including FSL (version 5.0.10), AFNI (version 18.1.09), and SPM (version SPM12, r7771)
-executed with GNU/Octave (version 5.2). 
-FSL and AFNI scripts were executed in Python 2.7. We also used a fixed number of 7 threads in AFNI executions
-to reproduce similar results to the original study in a feasible execution time.
+To measure between-tool (BT) variability, we executed the pipelines described in~\cite{bowring2019exploring}
+with FSL version 5.0.10, AFNI version 18.1.09, and SPM12 version r7771
+executed with GNU/Octave version 5.2. \tristan{are these versions the same as in Alex' paper?} 
+FSL and AFNI scripts were executed in Python 2.7 \tristan{why?}. We also used a fixed number of 7 threads in AFNI executions,
+to reproduce similar results in~\cite{bowring2019exploring} in a feasible execution time.
 All the analyses were conducted on the same operating system, CentOS 7.3.
-We ensured that the software versions used in all experiments were similar to the original study,
+We ensured that the software versions \tristan{you mentioned versions before, the writing is a bit circular here} used in all experiments were similar to the original study,
 and encapsulated them in Docker container images with available Dockerfiles at \url{https://github.com/ali4006/fuzzy-neurotools/tree/main/dockerfile}.
 
-In addition, the same subjects and fMRI analysis were processed with the same configurations in the FL environment
-to produce results in WT variability.
-We applied instrumentations at the virtual precision (t) of 53 bits for double-precision floating-point values
-and 24 bits for single-precision values. Three Fuzzy samples were generated, to match the number of tool samples.
+The same subjects and analyses were conducted in the same configurations
+with the FL environment, to measure within-tool (WT) variability. We
+applied instrumentations at the virtual precision t=53 bits for
+double-precision floating-point values and t=24 bits for single-precision
+values. Three fuzzy samples were generated for each subject and tool, to
+match the number of tool samples. \tristan{mention that for FSL you also used more virtual precisions}
 
-We evaluated WT and BT variabilities in thresholded and unthresholded group-level activation maps.
+We evaluated WT and BT variabilities in thresholded and unthresholded group-level and subject-level t-statistics maps.
 We computed voxel-wise standard deviations of T-statistic values for each pair of tools
-and then compared the distribution of standard deviations in both conditions.
-We computed the WT standard deviation as the square root of the summation of variances between samples in each tool.
+and then compared the distribution of \tristan{there's no distribution analysis in your results} standard deviations in both conditions.
+We computed the WT standard deviation as the square root of the summation of variances between samples in each tool. \tristan{write it as a formula, it's important enough and will be clearer}
+
 Moreover, we determined region-by-region Dice coefficients for the thresholded maps for each pair of tools.
 We characterized 360 regions that correspond to the cortical parcellation atlas
 in Human Connectome Project Multi-Modal Parcellation version 1.0 (HCP-MMP1.0)~\cite{glasser2016multi}.
 Dice values in WT are computed as the average pair-wise Dices among three Fuzzy samples for each pair of tools.
-Also, we compared the correlation of Dice scores normalized by the region sizes in both conditions.
+Also, we compared the correlation of Dice scores normalized by the region sizes in both conditions \tristan{move to results}.
 
 \tristan{did you check standard error vs standard deviation?}\ali{STD shows variability of data in relation to the mean (what we are looking for here),
 while SE is a type of STD (computed as $\frac{\sigma}{\sqrt{n}}$) for distribution of means (we use it when we are interested in the precision of means in different samples).}
