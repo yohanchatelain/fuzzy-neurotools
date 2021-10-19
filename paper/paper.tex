@@ -61,13 +61,14 @@ models implemented in different analysis software packages. While numerical
 and software variability were both shown to impact analysis outcomes, the
 extent to which these sources of variability compare for a given
 analysis remains understudied. This work presents a comparison of
-numerical and software variability for group-level functional MRI analysis
-\tristan{did we give up on individual analyses?}.
+numerical and software variability for group-level and subject-level functional MRI analyses.
 We reproduced a previous comparison between functional MRI analysis
 software packages FSL, AFNI, and SPM, which we extended to measure
 numerical variability through Monte-Carlo arithmetic.
-We find that between-tool variability is an order of magnitude higher than numerical variability.
-\tristan{summarize conclusions}
+Although We found that between-tool variability was larger than numerical variability,
+we identified brain regions that numerical perturbations simulated between-tool variability.
+Furthermore, we found more numerical instability in thresholded maps than unthresholded ones
+and individual analysis than group-level analysis results.
 
 \end{abstract}
 
@@ -303,12 +304,9 @@ This might be caused by the hardware optimizations such as dynamic scheduling~\c
 We could confirm that AFNI results were passed the quality checks by visually assessing the registration results of each individual subject.
 
 Summary statistics for the group-level unthresholded and thresholded t-statistics are reported in Table~\ref{table:pipeline-stats}.
-Overall, WT variability was an order of magnitude lower than BT variability for both means and standard deviations.
-While the highest variability was observed in \fslafni, \fslspm was made the least variations in BT.
-We also computed t-test statistics to examine differences in WT variability between tools.
-Results show that AFNI was generated the most variability in WT among the three tools with 
-the high t-value 39.6 between \fslafni samples and 65.5 between \afnispm samples, and p-value $< 0.05$.
-\ali{I'm checking this with Greg}.
+Overall, BT variability was larger than WT variability for both means and standard deviations.
+This was confirmed by computing the T-test and Wilcoxon signed-rank statistics between $BT(A, B)$, and $WT(A)$ and $WT(B)$ for $A$ and $B$ in $[FSL, SPM, AFNI]$.
+We obtained statistically significant values between BT and WT variability with t-value $> 70$ and p-value $< 0.05$ in both thresholded and unthresholded maps.
 
 %%%%%%%%%% Summary of statstics %%%%%%%%
 \setlength{\tabcolsep}{5pt}
@@ -344,7 +342,7 @@ the high t-value 39.6 between \fslafni samples and 65.5 between \afnispm samples
 Comparisons of standard deviations between thresholded images in WT and BT
 on MNI space are shown in Figure~\ref{fig:thresh-maps}.
 While we observed substantial BT variations with the average standard deviation 1.43,
-the magnitude of WT variations was much lower with the average standard deviation 0.34,
+the magnitude of WT variations was much smaller with the average standard deviation 0.34,
 as was anticipated. 
 Moreover, the magnitude of WT variations reached the magnitued of BT variations
 in some regions, shown in white in Figure~\ref{fig:thresh-maps}-\textbf{C}.
@@ -386,9 +384,8 @@ activated voxels, showing a linear correlation between BT and WT with p-value $<
 
 % Fig3
 Similar conclusions are drawn from the unthresholded t-statistics maps
-(Figure~\ref{fig:unthresh-maps}). BT variability is an order of magnitude
-higher than WT variability overall, however, BT and WT variability are
-comparable in some regions. 
+(Figure~\ref{fig:unthresh-maps}). BT variability is larger than WT variability overall, however,
+BT and WT variability are comparable in some regions. 
 
 
 %%%%%%%%%% Var. of Unthresh %%%%%%%%
@@ -405,13 +402,12 @@ comparable in some regions.
 
 % Fig4
 Figure~\ref{fig:unthresh-correlation} highlights the voxel-wise standard deviations in WT and BT variability
-with the identity lines where separate voxels with the standard deviation ratio of $0.5 < BT/WT < 2$.
-This identity area is represented on MNI space in the second row in Figure~\ref{fig:unthresh-correlation}
-for the voxels with the magnitude of standard deviation $> 0.1$.
+with the identity lines that indicate voxels with the standard deviation of $BT = WT$.
+The identity area is represented on MNI space in the second row in Figure~\ref{fig:unthresh-correlation}
+for the voxels with the magnitude of standard deviation $> 0.1$ and the satndard deviation ratio of $0.5 < BT/WT < 2$.
 The maps show the spatial localization of parts of the brain where the numerical variability simulated BT variability.
 This refines the presented results in Figure~\ref{fig:unthresh-maps}-\textbf{C},
 indicated voxels with similar magnitude of BT and WT variations were uniformly distributed across the brain.
-
 
   %%%%%%%%%% Corr. plot of tstats%%%%%%%%
   \begin{figure*}[ht]
@@ -427,9 +423,10 @@ indicated voxels with similar magnitude of BT and WT variations were uniformly d
         \includegraphics[width=\textwidth]{figures/std/correlated-unthresh.png}
         %\caption{Standard deviation of thresholded t-statistics map on template surface}
       \end{subfigure}
-      \caption{Scatter plots of unthresholded group t-statistics standard deviations computed between tools and within tools.
-        Identity lines distinguish voxels where the standard deviation ratio of BT/WT is in the interval (0.5, 2)
-        and are represented on brain maps in the second row.}
+      \caption{
+        Scatter plots of unthresholded group t-statistics standard deviations computed between tools and within tools.
+        The identity line distinguishes voxels where the standard deviation BT is equal to WT.
+        Voxels with the standard deviation ratio of BT/WT in the interval (0.5, 2) are represented on brain maps in the second row.}
     \label{fig:unthresh-correlation}
     \end{minipage}}
   \end{figure*}
@@ -502,13 +499,13 @@ show significant WT variability, particularly for some regions in the frontal, p
 
 We represented differences in the results of an fMRI analysis between numerical variability
 and the variability arisen from software package variations.
-Although BT variability was an order of magnitude higher than WT variability on average,
+Although BT variability was larger than WT variability on average,
 we demonstrated regions in the brain maps that numerical perturbations could simulate BT variability.
 The correlation of these variabilities suggests that numerical perturbations can be used to evaluate the robustness of the analyses
 to inter-software disparities.
 
 While switching between \fslspm was generated the least BT and WT variabilities consistently, the most level of these variabilities was identified
-between \fslafni and \afnispm. We also found AFNI as the most sensitive tool to numerical perturbations.
+between \fslafni and \afnispm. %We also found AFNI as the most sensitive tool to numerical perturbations.
 These results do not indicate which software package is better or worse since there is no ground-truth model for the analyses.
 However, this study revealed the importance of numerical instability in the selected tools for doing fMRI analyses.
 It provided a view of related numerical variability of which should be taken into consideration by the software developers.
