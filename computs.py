@@ -12,44 +12,144 @@ import inspect
 from nilearn.image import math_img
 from lib import dice
 from statistics import mean
+import scipy.stats as stat
+from scipy.signal import resample
 import os
 
 
-############# COMPUTES STD. DEV.
+############# Global nearest precision
+
+def calculate_rmse(im1, im2):
+    """Computing the RMSE between two images."""
+    img1 = np.nan_to_num(im1.get_fdata())
+    img2 = np.nan_to_num(im2.get_fdata())
+
+    if img1.shape != img2.shape:
+        im1 = resample_from_to(im1, im2, order=0)
+        img1 = np.nan_to_num(im1.get_fdata())
+
+    bg_ = np.where((np.isnan(im1.get_fdata())) & (np.isnan(im2.get_fdata())), False, True)
+    img1 = img1[bg_]
+    img2 = img2[bg_]
+
+    return np.sqrt(np.mean((img1-img2)**2, dtype=np.float64), dtype=np.float64)
+
+
+def global_nearest_precision():
+    rmse_ = {}
+    all_rmse = {}
+    global_average_rmse = []
+
+    for p in range(11, 54, 2):
+        rmse_[p] = 0
+        all_rmse[str(p)] = []
+        for s in ['fsl-afni', 'fsl-spm', 'afni-spm']:
+            bt_ = nib.load('./data/std/{}-unthresh-std.nii.gz'.format(s))
+            # bt_ = bt_.get_fdata()
+            wt_fsl = nib.load('./data/std/FL-FSL/p{}_fsl_unthresh_std.nii.gz'.format(p))
+            # wt_fsl = wt_fsl.get_fdata()
+            rmse_value = calculate_rmse(bt_, wt_fsl)
+            all_rmse[str(p)].append(rmse_value)
+            rmse_[p] += rmse_value
+
+    all_rmse = np.transpose(np.array(list(all_rmse.values())))
+
+    return min(rmse_, key=rmse_.get), all_rmse
+
+
+def plot_rmse_nearest(all_rmse):
+    import matplotlib.cm as cm
+
+    fig = plt.figure(figsize=(15,10))
+    colors = ['red', 'green', 'blue']
+    tool_pair = ['fsl-afni', 'fsl-spm', 'afni-spm']
+    for s, rmse_ in enumerate(all_rmse):
+        #type_ = ""
+        #if s+1 in i2T1w: type_ += "*"
+        #if s+1 in i2T2w: type_ += "$\dag$"
+        plt.plot(range(11,54, 2), rmse_, marker='x', color=colors[s], alpha=0.8, label=tool_pair[s].upper())
+
+    average = np.mean(all_rmse, axis=0, dtype=np.float64)
+    p1 = plt.plot(range(11,54, 2), average, marker='o', linewidth=2, color='black', label='Average') #, color='grey', alpha=0.5)
+    plt.xticks(range(11,54, 2), fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.xlabel('Virtual precision (bits)', fontsize=22)
+    plt.ylabel('RMSE (std)', fontsize=22)
+
+    plt.legend(fontsize=16)
+    # handles, labels = plt.gca().get_legend_handles_labels()
+    # order = color_sbj_order
+    # legend2 = plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order], fontsize=12, bbox_to_anchor=(1, .96), title="Subjects")
+
+    # legend1 = plt.legend(p1, ["Average"], bbox_to_anchor=(1.105,1))# bbox_to_anchor=(1.105,0.25) #loc=1
+    # plt.gca().add_artist(legend1)
+    # plt.gca().add_artist(legend2)
+
+    plt.savefig('./paper/figures/rmse-precisions.png', bbox_inches='tight', facecolor='w', transparent=False)
+
+
+############# COMPUTE and PLOT STD. DEV.
+
+def compute_std_WT(path_):
+    for p in range (11, 54, 2):
+        s1 = os.path.join(path_, 'p{}/FSL/run1/tstat1.nii.gz'.format(p))
+        s2 = os.path.join(path_, 'p{}/FSL/run2/tstat1.nii.gz'.format(p))
+        s3 = os.path.join(path_, 'p{}/FSL/run3/tstat1.nii.gz'.format(p))
+        f1 = nib.load(s1)
+        f1_data = f1.get_fdata()
+        f2 = nib.load(s2)
+        f2_data = f2.get_fdata()
+        f3 = nib.load(s3)
+        f3_data = f3.get_fdata()
+        img_concat = nib.funcs.concat_images([f1, f2, f3], check_affines=True, axis=None)
+        img_std = np.std(img_concat.get_fdata(), axis=3)
+        # nan bg images
+        img_std = np.where((f1_data == 0) & (f2_data == 0) & (f3_data == 0), np.nan, img_std)
+        nft_img_std = nib.Nifti1Image(img_std, f1.affine, header=f1.header)
+        nib.save(nft_img_std, os.path.join('data/std/FL-FSL/', 'p{}_fsl_unthresh_std.nii.gz'.format(p)))
+
 
 def compute_var(f1, f2, file_name=None, f3=None):
-    # Compute std. between tool image samples
+    # Compute std. in BT
     f1 = nib.load(f1)
     img_concat = nib.funcs.concat_images([f1, f2], check_affines=True, axis=None)
     img_std = np.std(img_concat.get_fdata(), axis=3)
-
-    # Compute variance between fuzzy image samples
-    if f3 is not None:
-        img_concat = nib.funcs.concat_images([f1, f2, f3], check_affines=True, axis=None)
-        img_var = np.var(img_concat.get_fdata(), axis=3)
-        nft_img = nib.Nifti1Image(img_var, f1.affine, header=f1.header)
-        return nft_img
-
-    # nan bg images
-    img_std[img_std == 0] = np.nan
-    # mean_ = np.nanmean(img_std)
-    # print('mean of {} is {}'.format(file_name, mean_))
-
+    f1_data = f1.get_fdata()
+    if type(f2) == str : f2 = nib.load(f2)
+    f2_data = f2.get_fdata()
+    # activated regions have nonzero values
+    img_std = np.where((f1_data == 0) & (f2_data == 0), np.nan, img_std)
     nft_img = nib.Nifti1Image(img_std, f1.affine, header=f1.header)
     nib.save(nft_img, os.path.join('data/std/', '{}-std.nii.gz'.format(file_name)))
+
+    # Compute variance and std. in WT
+    if f3 is not None:
+        img_concat = nib.funcs.concat_images([f1, f2, f3], check_affines=True, axis=None)       
+        img_std = np.std(img_concat.get_fdata(), axis=3)
+
+        if type(f3) == str : f3 = nib.load(f3)
+        f3_data = f3.get_fdata()
+        img_std = np.where((f1_data == 0) & (f2_data == 0) & (f3_data == 0), np.nan, img_std)
+
+        nft_img_std = nib.Nifti1Image(img_std, f1.affine, header=f1.header)
+        nib.save(nft_img_std, os.path.join('data/std/', '{}-std.nii.gz'.format(file_name)))
+
+        img_var = np.var(img_concat.get_fdata(), axis=3)
+        img_var = np.where((f1_data == 0) & (f2_data == 0) & (f3_data == 0), np.nan, img_var)
+        nft_img = nib.Nifti1Image(img_var, f1.affine, header=f1.header)
+        return nft_img
 
 
 def combine_var(f1, f2, meta_, file_name):
     var_f2_res = resample_from_to(f2, f1, order=0)
     # to combine two image variances, we use: var(x+y) = var(x) + var(y) + 2*cov(x,y)
     # and since the correlation between two arrays are so weak, we droped `2*cov(x,y)` from the formula
+    f1t = f1.get_fdata()
+    f2t = var_f2_res.get_fdata()
     combine_var = np.nan_to_num(f1.get_fdata()) + np.nan_to_num(var_f2_res.get_fdata())
     std_ = np.sqrt(combine_var)
     # nan bg images
-    std_[std_ == 0] = np.nan
-    # mean_ = np.nanmean(std_)
-    # print('mean of {} is {}'.format(file_name, mean_))
-
+    std_ = np.where((np.isnan(f1t)) & (np.isnan(f2t)), np.nan, std_)
     nft_img = nib.Nifti1Image(std_, meta_.affine, header=meta_.header)
     nib.save(nft_img, os.path.join('data/std/', '{}-std.nii.gz'.format(file_name)))
 
@@ -108,9 +208,9 @@ def var_between_fuzzy(mca_results):
     spm_2 = mca_results['spm'][2]['act_deact']
     spm_3 = mca_results['spm'][3]['act_deact']
     # compute variances
-    fsl_var = compute_var(fsl_1, fsl_2, f3=fsl_3)
-    afni_var = compute_var(afni_1, afni_2, f3=afni_3)
-    spm_var = compute_var(spm_1, spm_2, f3=spm_3)
+    fsl_var = compute_var(fsl_1, fsl_2, 'fsl-thresh', f3=fsl_3)
+    afni_var = compute_var(afni_1, afni_2, 'afni-thresh', f3=afni_3)
+    spm_var = compute_var(spm_1, spm_2, 'spm-thresh', f3=spm_3)
     # combine variances
     combine_var(fsl_var, afni_var, nib.load(fsl_1), 'fuzzy-fsl-afni-thresh')
     combine_var(fsl_var, spm_var, nib.load(fsl_1), 'fuzzy-fsl-spm-thresh')
@@ -127,9 +227,9 @@ def var_between_fuzzy(mca_results):
     spm_2 = mca_results['spm'][2]['stat_file']
     spm_3 = mca_results['spm'][3]['stat_file']
     # compute variances
-    fsl_var = compute_var(fsl_1, fsl_2, f3=fsl_3)
-    afni_var = compute_var(afni_1, afni_2, f3=afni_3)
-    spm_var = compute_var(spm_1, spm_2, f3=spm_3)
+    fsl_var = compute_var(fsl_1, fsl_2, 'fsl-unthresh', f3=fsl_3)
+    afni_var = compute_var(afni_1, afni_2, 'afni-unthresh', f3=afni_3)
+    spm_var = compute_var(spm_1, spm_2, 'spm-unthresh', f3=spm_3)
     # combine variances
     combine_var(fsl_var, afni_var, nib.load(fsl_1), 'fuzzy-fsl-afni-unthresh')
     combine_var(fsl_var, spm_var, nib.load(fsl_1), 'fuzzy-fsl-spm-unthresh')
@@ -147,9 +247,9 @@ def var_between_fuzzy(mca_results):
         spm_2 = mca_results['spm'][2]['SBJ'].replace('NUM', '%.2d' % i )
         spm_3 = mca_results['spm'][3]['SBJ'].replace('NUM', '%.2d' % i )
         # compute variances
-        fsl_var = compute_var(fsl_1, fsl_2, f3=fsl_3)
-        afni_var = compute_var(afni_1, afni_2, f3=afni_3)
-        spm_var = compute_var(spm_1, spm_2, f3=spm_3)
+        fsl_var = compute_var(fsl_1, fsl_2, 'sbj{}-fsl-unthresh'.format('%.2d' % i), f3=fsl_3)
+        afni_var = compute_var(afni_1, afni_2, 'sbj{}-afni-unthresh'.format('%.2d' % i), f3=afni_3)
+        spm_var = compute_var(spm_1, spm_2, 'sbj{}-spm-unthresh'.format('%.2d' % i), f3=spm_3)
         # combine variances
         combine_var(fsl_var, afni_var, nib.load(fsl_1), 'sbj{}-fuzzy-fsl-afni-unthresh'.format('%.2d' % i))
         combine_var(fsl_var, spm_var, nib.load(fsl_1), 'sbj{}-fuzzy-fsl-spm-unthresh'.format('%.2d' % i))
@@ -173,13 +273,39 @@ def get_ratio(path_):
     for i in range(1, 17):
         for type_ in ['unthresh']:
             for pair_ in ['fsl-spm', 'fsl-afni', 'afni-spm']:
-                img1_ = nib.load('{}/sbj{}-{}-{}-std.nii.gz'.format(path_, '%.2d' % i, pair_, type_))
-                img2_ = nib.load('{}/sbj{}-fuzzy-{}-{}-std.nii.gz'.format(path_, '%.2d' % i, pair_, type_))
+                img1_ = nib.load('{}/sub-{}/sbj{}-{}-{}-std.nii.gz'.format(path_, '%.2d' % i, '%.2d' % i, pair_, type_))
+                img2_ = nib.load('{}/sub-{}/sbj{}-fuzzy-{}-{}-std.nii.gz'.format(path_, '%.2d' % i, '%.2d' % i, pair_, type_))
                 img1_data = np.nan_to_num(img1_.get_fdata())
                 img2_data = np.nan_to_num(img2_.get_fdata())
                 ratio_ = img1_data / img2_data
                 nft_img = nib.Nifti1Image(ratio_, img1_.affine, header=img1_.header)
                 nib.save(nft_img, os.path.join(path_, 'sbj{}-ratio-{}-{}.nii.gz'.format('%.2d' % i, pair_, type_)))
+
+
+def get_diff(path_):
+    # Group-level
+    for type_ in ['thresh', 'unthresh']:
+        for pair_ in ['fsl-spm', 'fsl-afni', 'afni-spm']:
+            img1_ = nib.load('{}{}-{}-std.nii.gz'.format(path_, pair_, type_))
+            img2_ = nib.load('{}fuzzy-{}-{}-std.nii.gz'.format(path_, pair_, type_))
+            img1_data = np.nan_to_num(img1_.get_fdata())
+            img2_data = np.nan_to_num(img2_.get_fdata())
+            diff_ = img1_data - img2_data
+            nft_img = nib.Nifti1Image(diff_, img1_.affine, header=img1_.header)
+            nib.save(nft_img, os.path.join(path_, 'btMwt-{}-{}.nii.gz'.format(pair_, type_)))
+    
+    # Subject-level
+    path_ = os.path.join(path_, 'subject_level')
+    for i in range(1, 17):
+        for type_ in ['unthresh']:
+            for pair_ in ['fsl-spm', 'fsl-afni', 'afni-spm']:
+                img1_ = nib.load('{}/sub-{}/sbj{}-{}-{}-std.nii.gz'.format(path_, '%.2d' % i, '%.2d' % i, pair_, type_))
+                img2_ = nib.load('{}/sub-{}/sbj{}-fuzzy-{}-{}-std.nii.gz'.format(path_, '%.2d' % i, '%.2d' % i, pair_, type_))
+                img1_data = np.nan_to_num(img1_.get_fdata())
+                img2_data = np.nan_to_num(img2_.get_fdata())
+                diff_ = img1_data - img2_data
+                nft_img = nib.Nifti1Image(diff_, img1_.affine, header=img1_.header)
+                nib.save(nft_img, os.path.join(path_, 'sub-{}/sbj{}-btMwt-{}-{}.nii.gz'.format('%.2d' % i, '%.2d' % i, pair_, type_)))
 
 
 def cluster_std(bt_, wt_, img_f1, tool_, type_):
@@ -248,21 +374,33 @@ def plot_corr_variances():
 
             bt_data1, wt_data1, bt_data2, wt_data2, bt_data3, wt_data3, corr_map, upper_map = cluster_std(bt_, wt_, btool, pair_, type_)
             ax[ind_].plot(data1, data2, linewidth=0, marker='o', alpha=.5, label=label_)
-            ax[ind_].plot(bt_data1, wt_data1, linewidth=0, marker='o', color='purple', alpha=.5, label='Upper cluster')
+            #ax[ind_].plot(bt_data1, wt_data1, linewidth=0, marker='o', color='purple', alpha=.5, label='Upper cluster')
             #ax[ind_].plot(bt_data2, wt_data2, linewidth=0, marker='o', color='yellow', alpha=.5, label='Lower cluster')
-            ax[ind_].plot(bt_data3, wt_data3, linewidth=0, marker='o', color='green', alpha=.5, label='Correlated cluster')
+            #ax[ind_].plot(bt_data3, wt_data3, linewidth=0, marker='o', color='green', alpha=.5, label='Identity line')
 
-            #ax[ind_].plot(data1, y, color='black', alpha=.5, label='Regression line')
+            max_bt = max(np.nan_to_num(bt_data3))
+            bt_max_ind = np.argmax(np.nan_to_num(bt_data3))
+            wt_lower = wt_data3[bt_max_ind]
+
+            ax[ind_].plot([0, 2.5], [0, 2.5], color='black', linestyle='dashed', label='Identity line')
+
+            # ax[ind_].plot([0., 3.7], [0., 1.85], color='black', linestyle='dashed', label='Identity line')
+            # ax[ind_].plot([0., 1.25], [0., 2.5], color='black', linestyle='dashed')
+
             # ci = 1.96 * np.std(y)/np.mean(y)
             # ax.fill_between(x, (y-ci), (y+ci), color='g', alpha=.9)
             ax[ind_].set_title('')
             ax[ind_].set_xlabel('')
-            if ind_ == 0: ax[ind_].set_ylabel('Within tool variation (std.)')
+            if ind_ == 0: ax[ind_].set_ylabel('WT variability', fontsize=14)
             # if ind_[0] == 0: ax[ind_[0]].set_title('Correlation of variances in {}olded maps'.format(type_))
-            ax[ind_].set_xlabel('Between tool variation (std.)')
+            ax[ind_].set_xlabel('BT variability', fontsize=14)
             ax[ind_].set_xlim([-0.15, 5])
             ax[ind_].set_ylim([-0.07, 2.6])
-            ax[ind_].legend(facecolor='white', loc='upper right')
+            # ax[ind_].set_xticklabels(fontsize=14)
+            # ax[ind_].set_yticklabels(fontsize=14)
+            ax[ind_].legend(facecolor='white', loc='upper right', fontsize=12)
+            ax[ind_].tick_params(axis='both', labelsize=12)
+
             #ax[ind_].set_xscale('log')
 
             # print fraction of clusters
@@ -279,7 +417,7 @@ def plot_corr_variances():
         plt.savefig('./paper/figures/std-corr-{}-plot.png'.format(type_), bbox_inches='tight')
 
 
-############# COMPUTES DICES
+############# COMPUTE and PLOT DICES
 
 
 def dump_variable(var_, name_):
@@ -418,7 +556,7 @@ def get_dice_values(regions_txt, image_parc, tool_results, mca_results):
 
 
 def plot_dices(dices_):
-    fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(16, 8))
+    fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(16, 12))
     marker_ = ['o', '*', 'v', '>', '1', '2', '3', '4', 'P']
     colors = ['red', 'blue', 'green']
     for ind1_, act_ in enumerate(['act_deact']):
@@ -470,155 +608,103 @@ def plot_dices(dices_):
 
             ax.plot(tool_norm, mca_norm, linewidth=0, alpha=.5, color=colors[ind_], marker='o', label='{}'.format(tool_.upper()))
             ax.plot(tool_list, y_norm, color=colors[ind_], alpha=.7, label=line_norm)
-            ax.set_xlabel('Normalized Dice scores in BT')
-            ax.set_ylabel('Normalized Dice scores in WT')
+            ax.set_xlabel('Normalized Dice scores in BT', fontsize=22)
+            ax.set_ylabel('Normalized Dice scores in WT', fontsize=22)
             # ax.set_title('Normalized Dice scores from thresholded maps')
-            ax.legend()
+            ax.legend(fontsize=16)
+            ax.tick_params(axis='both', labelsize=18)
     #plt.show()
     plt.savefig('./paper/figures/dices_corr.png', bbox_inches='tight')
 
 
-############# PRINTS STATS
+############# PRINT STATS
 
-def compute_mean(data1_file, data2_file):
-    # Load nifti images
-    data1_img = nib.load(data1_file)
-    data2_img = nib.load(data2_file)
-    # Resample data2 on data1 using nearest neighbours
-    data2_img_res = resample_from_to(data2_img, data1_img, order=0)
-    
-    # Load data from images
-    data1 = data1_img.get_data()
-    data2 = data2_img_res.get_data()
-    # Vectorise input data
-    data1 = np.reshape(data1, -1)
-    data2 = np.reshape(data2, -1)
-
-    diff_ = np.abs(data1 - data2)  # Absolute difference between data1 and data2
-    mean_ = np.mean(diff_)                   # Mean of the difference
-    # std_ = np.std(diff_, axis=0)            # Standard deviation of the difference
-    # corr_ = np.corrcoef(data1, data2)[0,1] #  The correlation coefficient 
-    return mean_
-
-
-def print_gl_stats(tool_results, mca_results):
-    # Compute Mean of diff over whole image (no mask for bg)
-    for type_ in ['stat_file', 'act_deact']: # 'stat_file': 'unthresh' and 'act_deact': 'thresh'
-        for pair_ in ['fsl-spm', 'fsl-afni', 'afni-spm']:
-            t1, t2 = pair_.split('-')
-            f1 = tool_results[t1][type_]
-            f2 = tool_results[t2][type_]
-            bt_mean_diff = compute_mean(f1, f2)
-
-            # Fuzzy samples
-            means_ = []
-            means_.append(compute_mean(mca_results[t1][1][type_], mca_results[t1][2][type_]))
-            means_.append(compute_mean(mca_results[t1][1][type_], mca_results[t1][3][type_]))
-            means_.append(compute_mean(mca_results[t1][2][type_], mca_results[t1][3][type_]))
-            means_.append(compute_mean(mca_results[t2][1][type_], mca_results[t2][2][type_]))
-            means_.append(compute_mean(mca_results[t2][1][type_], mca_results[t2][3][type_]))
-            means_.append(compute_mean(mca_results[t2][2][type_], mca_results[t2][3][type_]))
-            wt_mean_diff = mean(means_)
-            print('Mean of diff of tstats in {} {}:\nBT {}\nWT {}'.format(pair_, type_, bt_mean_diff, wt_mean_diff))
-
-    # Compute Std of differences (ignore NaNs/zeros as bg)    
-    path_ = './data/std/'
+def print_gl_stats(path_):
+    # Compute stats of variabilities (ignore NaNs as bg)    
     for type_ in ['thresh', 'unthresh']:
         for pair_ in ['fsl-spm', 'fsl-afni', 'afni-spm']:
-            img1_ = nib.load('{}{}-{}-std.nii.gz'.format(path_, pair_, type_))
-            img2_ = nib.load('{}fuzzy-{}-{}-std.nii.gz'.format(path_, pair_, type_))
-            # img1_data = np.nan_to_num(img1_.get_fdata())
-            # img2_data = np.nan_to_num(img2_.get_fdata())
-            bt_std_data = img1_.get_fdata()
-            wt_std_data = img2_.get_fdata()
+            bt_ = nib.load('{}{}-{}-std.nii.gz'.format(path_, pair_, type_))
+            bt_std_data = bt_.get_fdata()
             bt_std_mean = np.nanmean(bt_std_data)
-            wt_std_mean = np.nanmean(wt_std_data)
-            print('Std of diff of tstats in {} {}:\nBT {}\nWT {}'.format(pair_, type_, bt_std_mean, wt_std_mean))
-            # # Compute SE: n=2 for bt and n=6 for wt
-            # bt_se_data = bt_std_data/np.sqrt(2)
-            # wt_se_data = wt_std_data/np.sqrt(6)
-            # bt_se_mean = np.nanmean(bt_se_data)
-            # wt_se_mean = np.nanmean(wt_se_data)
-            # print('SE of diff of tstats in {} {}:\nBT {}\nWT {}'.format(pair_, type_, bt_se_mean, wt_se_mean))
-            print("stop")
+            bt_std_std = np.nanstd(bt_std_data)
+            print('BT variability of tstats in {} {}:\nMean {}\nStd. {}'.format(pair_, type_, bt_std_mean, bt_std_std))
+
+        for tool_ in ['fsl', 'spm', 'afni']:
+            wt2_ = nib.load('{}{}-{}-std.nii.gz'.format(path_, tool_, type_))
+            wt2_std_data = wt2_.get_fdata()
+            wt2_std_mean = np.nanmean(wt2_std_data)
+            wt2_std_std = np.nanstd(wt2_std_data)
+            print('WT variability of tstats in {} {}:\nMean {}\nStd. {}'.format(tool_, type_, wt2_std_mean, wt2_std_std))
+
+        print("stop")
 
 
-def print_sl_stats(tool_results, mca_results):
-    # Compute Mean of diff over whole image (no mask for bg)
-    min_sbj = 100
-    max_sbj = 0
-    for i in range(1, 17): 
-        bt_mean = []
-        wt_mean = []
-        for pair_ in ['fsl-spm', 'fsl-afni', 'afni-spm']:
-            t1, t2 = pair_.split('-')
-            f1 = tool_results[t1]['SBJ'].replace('NUM', '%.2d' % i )
-            f2 = tool_results[t2]['SBJ'].replace('NUM', '%.2d' % i )
-            bt_mean_diff = compute_mean(f1, f2)
-            bt_mean.append(bt_mean_diff)
-
-            # Fuzzy samples
-            means_ = []
-            means_.append(compute_mean(mca_results[t1][1]['SBJ'].replace('NUM', '%.2d' % i ),
-                                       mca_results[t1][2]['SBJ'].replace('NUM', '%.2d' % i )))
-            means_.append(compute_mean(mca_results[t1][1]['SBJ'].replace('NUM', '%.2d' % i ),
-                                       mca_results[t1][3]['SBJ'].replace('NUM', '%.2d' % i )))
-            means_.append(compute_mean(mca_results[t1][2]['SBJ'].replace('NUM', '%.2d' % i ),
-                                       mca_results[t1][3]['SBJ'].replace('NUM', '%.2d' % i )))
-            means_.append(compute_mean(mca_results[t2][1]['SBJ'].replace('NUM', '%.2d' % i ),
-                                       mca_results[t2][2]['SBJ'].replace('NUM', '%.2d' % i )))
-            means_.append(compute_mean(mca_results[t2][1]['SBJ'].replace('NUM', '%.2d' % i ),
-                                       mca_results[t2][3]['SBJ'].replace('NUM', '%.2d' % i )))
-            means_.append(compute_mean(mca_results[t2][2]['SBJ'].replace('NUM', '%.2d' % i ),
-                                       mca_results[t2][3]['SBJ'].replace('NUM', '%.2d' % i )))
-            wt_mean_diff = mean(means_)
-            wt_mean.append(wt_mean_diff)
-            # print('Mean of diff of unthresholded tstats in Subject {} \n{}:\nBT {}\nWT {}'.format('%.2d' % i, pair_, bt_mean_diff, wt_mean_diff))
-            # print('Stop')
-        avg_bt_wt = (mean(wt_mean) + mean(bt_mean))/2
-        if avg_bt_wt < min_sbj:
-            min_sbj = avg_bt_wt
-            i_min = i
-        if avg_bt_wt > max_sbj:
-            max_sbj = avg_bt_wt
-            i_max = i
-        # print('{}: bt_mean {} and wt_mean {}'.format(pair_, mean(bt_mean), mean(wt_mean)))
-    print('i_min {} mean {} \ni_max {} mean {}'.format(i_min, min_sbj, i_max, max_sbj))
-    print('stop')
-
-    # Compute Std of differences (ignore NaNs/zeros as bg)    
-    path_ = './data/std/subject_level'
-    type_ = 'unthresh'
+def print_sl_stats(path_):
+    # Compute Mean of std over subjects (ignore NaNs as bg)
     min_sbj = 100
     max_sbj = 0
     for i in range(1, 17):
-        bt_mean = []
-        wt_mean = []
-        for pair_ in ['fsl-spm', 'fsl-afni', 'afni-spm']:
-            img1_ = nib.load('{}/sub-{}/sbj{}-{}-{}-std.nii.gz'.format(path_, '%.2d' % i, '%.2d' % i, pair_, type_))
-            img2_ = nib.load('{}/sub-{}/sbj{}-fuzzy-{}-{}-std.nii.gz'.format(path_, '%.2d' % i, '%.2d' % i, pair_, type_))
-            # img1_data = np.nan_to_num(img1_.get_fdata())
-            # img2_data = np.nan_to_num(img2_.get_fdata())
-            bt_std_data = img1_.get_fdata()
-            wt_std_data = img2_.get_fdata()
-            bt_std_mean = np.nanmean(bt_std_data)
+        wt_list = []
+        bt_list = []
+        for tool_ in ['fsl', 'spm', 'afni']:
+            wt_ = nib.load(os.path.join(path_, 'sbj{}-{}-unthresh-std.nii.gz'.format('%.2d' % i, tool_)))
+            wt_std_data = wt_.get_fdata()
             wt_std_mean = np.nanmean(wt_std_data)
-            
-            wt_mean.append(wt_std_mean)
-            bt_mean.append(bt_std_mean)
+            wt_list.append(wt_std_mean)
 
-            # print('Std of diff of unthresholded tstats in Subject {} \n{}:\nBT {}\nWT {}'.format('%.2d' % i, pair_, bt_std_mean, wt_std_mean))
-            # print("stop")
-        avg_bt_wt = (mean(wt_mean) + mean(bt_mean))/2
-        if avg_bt_wt < min_sbj:
-            min_sbj = avg_bt_wt
-            i_min = i
-        if avg_bt_wt > max_sbj:
-            max_sbj = avg_bt_wt
+        for pair_ in ['fsl-spm', 'fsl-afni', 'afni-spm']:
+            bt_ = nib.load(os.path.join(path_, 'sbj{}-{}-unthresh-std.nii.gz'.format('%.2d' % i, pair_)))
+            bt_std_data = bt_.get_fdata()
+            bt_std_mean = np.nanmean(bt_std_data)
+            bt_list.append(bt_std_mean)
+
+        if mean(wt_list) > max_sbj:
+            max_sbj = mean(wt_list)
             i_max = i
-        # print('{}: bt_mean {} and wt_mean {}'.format(pair_, mean(bt_mean), mean(wt_mean)))
-    print('i_min {} std {} \ni_max {} std {}'.format(i_min, min_sbj, i_max, max_sbj))
+            max_sbj_bt = mean(bt_list)
+
+    print('Subject {} has the highest WT variability as the average std of {}\n BT std is {}'.format(i_max, max_sbj, max_sbj_bt))
     print('stop')
+
+
+def compute_stat_test():
+    path_ = 'data/std/'
+    for type_ in ['unthresh', 'thresh']:
+        for pair_ in ['fsl-spm', 'fsl-afni', 'afni-spm']:
+            bt_ = nib.load('{}{}-{}-std.nii.gz'.format(path_, pair_, type_))
+            bt_std_data = bt_.get_fdata()
+
+            t1, t2 = pair_.split('-')
+            wt1_ = nib.load('{}{}-{}-std.nii.gz'.format(path_, t1, type_))
+            wt1_std_data = wt1_.get_fdata()
+
+            wt2_ = nib.load('{}{}-{}-std.nii.gz'.format(path_, t2, type_))
+            wt2_std_data = wt2_.get_fdata()
+
+            bg_ = np.where((np.isnan(bt_.get_fdata())) , False, True)
+            bt_img = np.nan_to_num(bt_std_data)[bg_]
+
+            bg_ = np.where((np.isnan(wt1_.get_fdata())) , False, True)
+            img1 = np.nan_to_num(wt1_std_data)[bg_]
+            bg_ = np.where((np.isnan(wt2_.get_fdata())) , False, True)
+            img2 = np.nan_to_num(wt2_std_data)[bg_]
+            # print('WT img1 mean {} and img2 mean {} and bt_img mean {} '.format(mean(img1), mean(img2), mean(bt_img)))
+            num_sample = int(1e3)
+            res_bt = resample(bt_img, num_sample)
+            res1_ = resample(img1, num_sample)
+            res2_ = resample(img2, num_sample)
+
+            t_stat1, p_val1 = stat.wilcoxon(res_bt, res1_)
+            t_stat2, p_val2 = stat.wilcoxon(res_bt, res2_)
+            print("wilcoxon-test between BT({}) and WT({}) is {} and p-value {}".format(pair_, t1, t_stat1, p_val1*6))
+            print("wilcoxon-test between BT({}) and WT({}) is {} and p-value {}".format(pair_, t2, t_stat2, p_val2*6))
+
+            t_stat1, p_val1 = stat.ttest_ind(res_bt, res1_)
+            t_stat2, p_val2 = stat.ttest_ind(res_bt, res2_)
+
+            print("t-test between BT({}) and WT({}) is {} and p-value {}".format(pair_, t1, t_stat1, p_val1*6))
+            print("t-test between BT({}) and WT({}) is {} and p-value {}".format(pair_, t2, t_stat2, p_val2*6))
+            print('stop')
 
 
 def combine_thresh(tool_results, mca_results):
@@ -754,8 +840,16 @@ def main(args=None):
     # var_between_fuzzy(mca_results) #WT
     ### Create ratio images between BT and WT std images
     # get_ratio(std_path)
+    # get_diff(std_path)
     ### Plot correlation of variances between BT and FL (Fig 4)
-    # plot_corr_variances()
+    #plot_corr_variances()
+    ### std in different precisions in WT
+    # path_ = './results/ds000001/fuzzy/'
+    # compute_std_WT(path_)
+    ### Global nearest precision
+    # p_nearest, all_rmse = global_nearest_precision()
+    # print(p_nearest)
+    # plot_rmse_nearest(all_rmse)
 
     ### Compute Dice scores and then plot (Fig 2)
     # image_parc = './data/MNI-parcellation/HCPMMP1_on_MNI152_ICBM2009a_nlin_resampled.splitLR.nii.gz'
@@ -768,9 +862,9 @@ def main(args=None):
     #     plot_dices(dices_)
 
     ### Print stats (Table 2)
-    # print_gl_stats(tool_results, mca_results)
-    # print_sl_stats(tool_results, mca_results)
-
+    # print_gl_stats(std_path)
+    # print_sl_stats(std_path)
+    # compute_stat_test()
 
 if __name__ == '__main__':
     main()

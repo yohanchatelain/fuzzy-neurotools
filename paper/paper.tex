@@ -522,26 +522,23 @@ It is notable that we obtained more uncertainty on thresholded results than unth
 probably due to different thresholding values used in different tools.
 This is consistent with the observations in~\cite{bowring2021isolating} where identified a high correlation between unthresholded t-statistic maps,
 but substantially low Dice coefficient for activations in the thresholded maps.
-This raises further investigations on thresholding techniques to reduce instabilities.
+This raises further investigations on thresholding techniques to reduce the associated instabilities.
 
 Given that FL only perturbs basic mathematical functions, we expect more numerical variability by perturbing linear algebra,
-in particular for non-scalar types like vectors or matrices. For the future study, this can be evaluated using MCA-instrumented versions 
-of BLAS and LABACK along with other libraries available in the Fuzzy project in Verificarlo's GitHub repository at github.com/verificarlo/fuzzy.  
+in particular for non-scalar types like vectors or matrices. For the future study, this can be evaluated using MCA-instrumented versions
+of BLAS and LAPACK along with other libraries available in the Fuzzy project in Verificarlo's GitHub repository at github.com/verificarlo/fuzzy.
 
 
 \section{Conclusion}
 
-\begin{itemize}
+We presented a comparison study between numerical variability introduced by floating-point perturbations and tool variability arised from software package variations.
+For an fMRI analysis, we measured a significant variability in both conditions, which was comparable for some brain regions.
+We showed the FL library as a valuable model based on MCA method for simulating the numerical variability.
+Moreover, we can leverage the MCA-instrumented libraries for simulating the numerical uncertainty in different studies.
 
-    \item[$\bullet$ ] Further studies can be evaluating the numerical stabilities within tool by focusing on the particular parts of
-    the pipeline that has been identified as the main sources of variations in~\cite{bowring2021isolating}.
-    Also, we can invetigate the precision in WT variability that simulates mostly BT variability in the furure study.
-
-\end{itemize}
-
-
-\section{Acknowledgments}
-
+Further work can be done to evaluate and localize the numerical stabilities within tools by focusing on the particular parts of
+the pipeline that has been identified as the main sources of variations in~\cite{bowring2021isolating}.
+This helps to identify the accurate source of instabilities within pipelines and gradually improve the stability of the pipeline components.
 
 %%
 %% The next two lines define the bibliography style to be used, and
