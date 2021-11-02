@@ -260,6 +260,8 @@ while MATLAB uses its built-in functions and does not allow to apply FL.
 We also used a fixed number of 7 threads in AFNI executions,
 to reproduce similar results in~\cite{bowring2019exploring} in a feasible execution time.
 All the analyses were conducted on the same operating system, CentOS 7.3.
+The computations were performed on \href{https://www.computecanada.ca}{Compute Canada's} Béluga cluster nodes,
+each with 2× Intel Gold 6148 Skylake @ 2.4 GHz (40 cores/node) CPU and memory amount of 8 GB per core.
 We encapsulated the above-mentioned software packages in Docker container images with available Dockerfiles at \url{https://github.com/ali4006/fuzzy-neurotools/tree/main/dockerfile}.
 
 The same subjects and analyses were conducted in the same configurations
@@ -279,7 +281,7 @@ We computed the WT standard deviation as the square root of the summation of var
 
 \begin{equation} \label{eq:mca_std}
   \begin{multlined}
-  STD_{WT} = \sqrt{VAR_{tool1} + VAR_{tool2}}
+  \sigma_{WT} = \sqrt{\sigma_{tool1}^2 + \sigma_{tool2}^2}
 %  VAR_{x} = \sum_{i=1}^{n} \frac{(x_i - \bar{x})}{n-1}
   \end{multlined}
 \end{equation}
@@ -288,17 +290,16 @@ Moreover, we determined region-by-region Dice coefficients for the thresholded m
 We characterized 360 regions that correspond to the cortical parcellation atlas
 in Human Connectome Project Multi-Modal Parcellation version 1.0 (HCP-MMP1.0)~\cite{glasser2016multi}.
 Dice values in WT are computed as the average pair-wise Dices among three Fuzzy samples for each pair of tools.
+All Dice scores were normalized by the region sizes and remained in the range of 0 to 1.
 
 \section{Results}
-All scripts and data to create the figures presented in this section are available at \url{https://github.com/ali4006/fuzzy-neurotools} \tristan{move to lab org}.
-The computations were performed on \href{https://www.computecanada.ca}{Compute Canada's} Béluga cluster
-with 872 nodes, each with 2× Intel Gold 6148 Skylake @ 2.4 GHz (40 cores/node) CPU and node memory ranging from 92 to 752 GB.
+All scripts and data to create the figures presented in this section are available at \url{https://github.com/big-data-lab-team/fuzzy-neurotools}.
 
 We ensured a successful replication of the analyses initially presented in~\cite{bowring2019exploring}
 by comparing t-statistic group maps with results in the original study.
 We found identical checksums in the results of FSL.
 Also, we could replicate results with the same SPM version and MATLAB as in the original study with visually imperceptible differences.
-Changes in the SPM version and replacing Octave with MATLAB resulted in visually small differences which were still hard to distinguish between them.
+%Changes in the SPM version and replacing Octave with MATLAB resulted in visually small differences which were still hard to distinguish between them.
 For AFNI, the activation maps were similar overall; however, visual differences were noticeable.
 This might be caused by the hardware optimizations such as dynamic scheduling~\cite{demmel2013numerical}.
 We could confirm that AFNI results were passed the quality checks by visually assessing the registration results of each individual subject.
@@ -434,14 +435,43 @@ indicated voxels with similar magnitude of BT and WT variations were uniformly d
 
   \subsection{Subject-level unthresholded maps}
 
+  Summary statistics for the subject-level unthresholded t-statistics are reported in Table~\ref{table:unthresh-maps-subjects}.
+  Overall, results represent similar findings with group-level t-statistics between WT and BT variations.
+
   Figure~\ref{fig:unthresh-maps-sbj} shows BT and WT variability of the
   unthresholded t-statistics for the subject with the highest WT
   variability among the 16 subjects.
-  We observed substantial WT variations with the average standard deviation 0.099 compared to 
+  For this particular subject, we observed substantial WT variations with the average standard deviation 0.099 compared to 
   the average standard deviation 0.466 for BT variations.
   As can be seen in the Figure, WT variability approaches and even surpasses BT variability in some regions.
   This subject also revealed that WT variability mainly concentrated in some regions  
   contrary to the corresponding variability from unthresholded group-level t-statistics which was uniformly distributed across the brain.
+
+  %%%%%%%%%% Summary of statstics %%%%%%%%
+\setlength{\tabcolsep}{5pt}
+\begin{table}[h]
+    \centering
+    \begin{tabular}{cccc}
+        \toprule
+        \multirow{2}{*}{}& {} & \multicolumn{2}{c}{Unthresholded} \\
+        \cmidrule{3-4} \\
+        {} & {} & Mean & Std. dev. \\
+        \midrule
+        \rowcolor{lightgray}
+        {Between Tools} & FSL vs. SPM        &  0.366       & 0.293     \\
+        \rowcolor{lightgray}
+        {(BT)} & FSL vs. AFNI                &  0.439       & 0.352     \\
+        \rowcolor{lightgray}
+        {} & AFNI vs. SPM                    &  0.491       & 0.381     \\
+        {Within Tool} & FSL                  &  0.077       & 0.054     \\
+        {(WT)}   & SPM                       &  0.048       & 0.037     \\
+        {}   & AFNI                          &  0.108       & 0.131     \\
+        \bottomrule
+    \end{tabular}
+    \caption{Summary of voxel-wise mean and standard deviation in subject-level t-statistics in BT and WT. Values were averaged across 16 subjects.}
+    \label{table:unthresh-maps-subjects}
+\end{table}
+
 
   %%%%%%%%%% Var. of Unthresh sbj05%%%%%%%%
 \begin{figure*}[ht]

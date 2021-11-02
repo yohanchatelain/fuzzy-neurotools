@@ -643,20 +643,42 @@ def print_sl_stats(path_):
     # Compute Mean of std over subjects (ignore NaNs as bg)
     min_sbj = 100
     max_sbj = 0
+    all_wt_list = {}
+    all_bt_list = {}
     for i in range(1, 17):
         wt_list = []
         bt_list = []
-        for tool_ in ['fsl', 'spm', 'afni']:
-            wt_ = nib.load(os.path.join(path_, 'sbj{}-{}-unthresh-std.nii.gz'.format('%.2d' % i, tool_)))
-            wt_std_data = wt_.get_fdata()
-            wt_std_mean = np.nanmean(wt_std_data)
-            wt_list.append(wt_std_mean)
-
         for pair_ in ['fsl-spm', 'fsl-afni', 'afni-spm']:
             bt_ = nib.load(os.path.join(path_, 'sbj{}-{}-unthresh-std.nii.gz'.format('%.2d' % i, pair_)))
             bt_std_data = bt_.get_fdata()
             bt_std_mean = np.nanmean(bt_std_data)
             bt_list.append(bt_std_mean)
+            bt_std_std = np.nanstd(bt_std_data)
+            if pair_ in all_bt_list.keys():
+                tmp = all_bt_list[pair_]['mean']
+                all_bt_list[pair_]['mean'] = bt_std_mean + tmp
+                tmp = all_bt_list[pair_]['std']
+                all_bt_list[pair_]['std'] = bt_std_std + tmp
+            else:
+                all_bt_list[pair_] = {}
+                all_bt_list[pair_]['mean'] = bt_std_mean
+                all_bt_list[pair_]['std'] = bt_std_std
+
+        for tool_ in ['fsl', 'spm', 'afni']:
+            wt_ = nib.load(os.path.join(path_, 'sbj{}-{}-unthresh-std.nii.gz'.format('%.2d' % i, tool_)))
+            wt_std_data = wt_.get_fdata()
+            wt_std_mean = np.nanmean(wt_std_data)
+            wt_list.append(wt_std_mean)
+            wt_std_std = np.nanstd(wt_std_data)
+            if tool_ in all_wt_list.keys():
+                tmp = all_wt_list[tool_]['mean']
+                all_wt_list[tool_]['mean'] = wt_std_mean + tmp
+                tmp = all_wt_list[tool_]['std']
+                all_wt_list[tool_]['std'] = wt_std_std + tmp
+            else:
+                all_wt_list[tool_] = {}
+                all_wt_list[tool_]['mean'] = wt_std_mean
+                all_wt_list[tool_]['std'] = wt_std_std
 
         if mean(wt_list) > max_sbj:
             max_sbj = mean(wt_list)
@@ -664,6 +686,12 @@ def print_sl_stats(path_):
             max_sbj_bt = mean(bt_list)
 
     print('Subject {} has the highest WT variability as the average std of {}\n BT std is {}'.format(i_max, max_sbj, max_sbj_bt))
+    
+    for pair_ in ['fsl-spm', 'fsl-afni', 'afni-spm']:
+        print('BT variability of tstats in {} unthresholded:\nMean {}\nStd. {}'.format(pair_, all_bt_list[pair_]['mean']/16, all_bt_list[pair_]['std']/16))
+    for tool_ in ['fsl', 'spm', 'afni']:
+        print('WT variability of tstats in {} unthresholded:\nMean {}\nStd. {}'.format(tool_, all_wt_list[tool_]['mean']/16, all_wt_list[tool_]['std']/16))
+
     print('stop')
 
 
