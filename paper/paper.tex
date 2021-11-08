@@ -43,7 +43,7 @@
 \newcommand{\afnispm}{AFNI-SPM\xspace}
 \newcommand{\tristan}[1]{\color{orange}\textbf{From Tristan:} #1\color{black}\xspace}
 \newcommand{\ali}[2]{\color{green}\textbf{Ali:} #1\color{black}\xspace}
-
+\newcommand{\discuss}[1]{\uwave{#1}}
 
 
 \title{Comparing tool variability and numerical variability in fMRI analyses}
@@ -121,25 +121,25 @@ This comparative study reveals the importance of numerical variability and motiv
 \subsection{fMRI analysis \& Dataset}
 
 We replicated the fMRI analysis described as study `ds000001'
-in~\cite{schonberg2012decreasing}, relying on the
-data publicly available in OpenNeuro at
-\url{https://openneuro.org/datasets/ds000001} and using the three main
-software packages for fMRI data processing, namely FMRIB Software Library
-(FSL)~\cite{jenkinson2012fsl}, Analysis of Functional NeuroImages
-(AFNI)~\cite{cox1996afni}, and Statistical Parametric
-Mapping(SPM)~\cite{penny2011statistical}. We selected this dataset because
-comparable analysis pipelines implemented in FSL, AFNI and SPM 
-were already published and extensively described in~\cite{bowring2019exploring}.
-Furthermore, the work in~\cite{bowring2019exploring} already evaluated the effect of tool variability for
-this dataset, which we intended to complement with the present quantification of numerical variability.
+in~\cite{schonberg2012decreasing}, relying on the data publicly available
+in OpenNeuro at \url{https://openneuro.org/datasets/ds000001} and using the
+three main software packages for fMRI data processing, namely FMRIB
+Software Library (FSL)~\cite{jenkinson2012fsl}, Analysis of Functional
+NeuroImages (AFNI)~\cite{cox1996afni}, and Statistical Parametric
+Mapping (SPM)~\cite{penny2011statistical}. We selected this dataset because
+comparable analysis pipelines implemented in FSL, AFNI and SPM were already 
+publicly available and extensively described in~\cite{bowring2019exploring}.
+Furthermore, the work in~\cite{bowring2019exploring} already evaluated the
+effect of tool variability for this dataset, which we intended to
+complement with the present quantification of numerical variability.
 
 In the selected study, 16 healthy adult subjects participated in the
-balloon analog risk task~\cite{lejuez2002evaluation} to measure
-risk-taking behavior over three scanning sessions~\cite{schonberg2012decreasing}.
-We reused the preprocessing, first-level, and
-second-level analyses implemented by~\cite{bowring2019exploring} consistently across all three software packages using 
-widely accepted analytical steps. Table~\ref{table:pipeline-steps} summarizes the analytical steps in each pipeline.
-More details are available in~\cite{bowring2019exploring}.
+balloon analog risk task~\cite{lejuez2002evaluation} to measure risk-taking
+behavior over three scanning sessions~\cite{schonberg2012decreasing}. We
+reused the preprocessing, first-level, and second-level analyses
+implemented by~\cite{bowring2019exploring} consistently across all three
+software packages. Table~\ref{table:pipeline-steps} summarizes the analytical steps in each
+pipeline. More details are available in~\cite{bowring2019exploring}.
 
 
 %%%%%%%%%% Summary of statstics %%%%%%%%
@@ -176,51 +176,43 @@ More details are available in~\cite{bowring2019exploring}.
     \label{table:pipeline-steps}
 \end{table}
 
-\subsection{Fuzzy libmath environment}
+\subsection{Fuzzy Libmath environment}
 
-To introduce controlled amounts of numerical error in the analyses, we used the Fuzzy Libmath (FL) library~\cite{salari2021accurate}, an MCA-instrumented 
-version of the GNU mathematical library (libmath).
-FL works based on the MCA, a floating-point arithmetic that simulates roundoff and catastrophic cancellation errors
-by introducing a controlled amount of noise in the floating-point operations 
-through the following perturbation model~\cite{Parker1997-qq}:
+To introduce controlled amounts of numerical noise in the analyses, we used
+the Fuzzy Libmath library~\cite{salari2021accurate}, a version of the GNU
+mathematical library (libmath) instrumented with Monte-Carlo arithmetic.
+Monte-Carlo arithmetic simulates roundoff and catastrophic cancellation
+errors by introducing a controlled amount of noise in the floating-point
+operations through the following perturbation model~\cite{Parker1997-qq}:
 
 \begin{equation} \label{eq:mca_inexact}
   inexact(x) = x + 2^{e_x-t}\xi
 \end{equation}
 
 where $e_x$ is the exponent in the floating-point representation of $x$,
-$t$ is the virtual precision, the number of bits in mantissa that will not be perturbed,
-and $\xi$ is a random uniform variable of $(-\frac{1}{2}, \frac{1}{2})$.
-The MCA perturbations are automated using Verificarlo tool~\cite{denis2015verificarlo} at compilation time.
+$t$ is the virtual precision --- the number of unperturbed bits in the
+mantissa of $x$ ---, and $\xi$ is a random uniform variable of
+$(-\frac{1}{2}, \frac{1}{2})$. The perturbation is introduced using 
+Verificarlo~\cite{denis2015verificarlo}, an LLVM compiler supporting Monte-Carlo 
+arithmetic and other types of numerical analyses.
 
-The instrumented functions are loaded in the pipeline using LD\_PRELOAD, a Linux environment variable
-to force load a shared library into an executable. This allows functions defined in FL to transparently
-overload the original ones without the need to modify or recompile the analysis pipeline.
+The instrumented libmath functions are loaded in the pipeline using
+LD\_PRELOAD, a Linux mechanism to force load a shared library into an
+executable. This allows functions defined in Fuzzy Libmath to transparently
+overload the original ones without the need to modify or recompile the
+analysis pipeline.
 
-FL only introduces perturbations in the output values of mathematical
-functions but not in their implementation. This is done by wrapping the original functions 
-and applying function \texttt{inexact} to their returned values.
-Listing~\ref{algo:wrapper} shows an example of this wrapping for the log function in both single and double precisions.
-In this script, the original functions are called by \texttt{dlsym},
-a function that returns the memory address of a symbol, in our case \texttt{RTLD\_NEXT}, the address of the next occurrence of the function.
-These wrappers are compiled with Verificarlo for each function. The MCA
-instrumentation is activated by adding a floating-point zero to the output
-of the original function so that this summation is instrumented.
-
-
-% \lstdefinestyle{customc}{
-%   belowcaptionskip=1\baselineskip,
-%   breaklines=true,
-%   frame=L,
-%   xleftmargin=\parindent,
-%   language=C,
-%   showstringspaces=false,
-%   basicstyle=\footnotesize\ttfamily,
-%   keywordstyle=\bfseries\color{green!40!black},
-%   commentstyle=\itshape\color{purple!40!black},
-%   identifierstyle=\color{blue},
-%   stringstyle=\color{orange},
-% }
+Fuzzy Libmath only introduces perturbations in the output values of
+mathematical functions but not in their input values or within their
+implementation. This is done by wrapping the original functions and
+applying function \texttt{inexact} to their returned values.
+Listing~\ref{algo:wrapper} shows an example of this wrapping for the
+\texttt{log} function in single and double precision. In this wrapper, the
+original function is called through \texttt{dlsym}, a function that returns
+the memory address of a symbol --- in our case \texttt{RTLD\_NEXT}, the
+address of the next occurrence of the function in memory. Function wrappers
+are compiled with Verificarlo. Verificarlo instruments the result of the
+addition between the original function output and a floating-point zero.
 
 \lstdefinestyle{customasm}{
   belowcaptionskip=1\baselineskip,
@@ -230,84 +222,105 @@ of the original function so that this summation is instrumented.
   basicstyle=\footnotesize\ttfamily,
   commentstyle=\itshape\color{purple!40!black},
 }
-\lstinputlisting[caption=Sample wrapper script, label=algo:wrapper, style=customasm]{wrapper.c}
-%\lstinputlisting[caption=Scheduler, style=customc]{../wrapper2.c}
+\lstinputlisting[caption=Sample wrapper function (C code), label=algo:wrapper, style=customasm]{wrapper.c}
 
-FL allows measuring the effect of numerical variability by running a program multiple times, 
-resulting in multiple independent realizations of the same analysis. Each of these samples 
-are equally plausible estimates of the true numerical result. 
-We used FL to simulate machine error, the relative error between a real number and its floating-point counterparts
-(e.g., $2^{-53}$ for IEEE-754 double precision).
-Moreover, FL allows simulating any virtual precision
-by controlling the magnitude of the injected error and
-thus to not be limited to the machine precision.
-
-The presented method does not require any
-particular software instrumentation in the data analysis code: it only
-assumes that executables are dynamically linked against GNU libc. For this purpose,
-(1) we captured the list of dynamic library dependencies using the \texttt{ldd} Linux utility for the software executables,
-(2) we traced the system library calls using \texttt{ltrace} Linux program while running the pipeline processes.
-
+\tristan{To be discussed with Ali, this paragraph explains what was done but not 
+the purpose or the result of it.}
+The presented method does not require any particular software
+instrumentation in the data analysis code: it only assumes that executables
+are dynamically linked against GNU libc. For this purpose, (1) we captured
+the list of dynamic library dependencies using the \texttt{ldd} Linux
+utility for the software executables, (2) we traced the system library
+calls using \texttt{ltrace} Linux program while running the pipeline
+processes.
 
 \subsection{Data processing}
 
-To measure between-tool (BT) variability, we executed the pipelines described in~\cite{bowring2019exploring}
-with FSL version 5.0.10, AFNI version 18.1.09, and SPM12 version r7771
-executed with GNU/Octave version 5.2.
-All these software versions were identical to the original study except for SPM
-that we used Octave instead of MATLAB to enable mathematical function instrumentation using FL,
-while MATLAB uses its built-in functions and does not allow to apply FL.
-We also used a fixed number of 7 threads in AFNI executions,
-to reproduce similar results in~\cite{bowring2019exploring} in a feasible execution time.
-All the analyses were conducted on the same operating system, CentOS 7.3.
-The computations were performed on \href{https://www.computecanada.ca}{Compute Canada's} Béluga cluster nodes,
-each with 2× Intel Gold 6148 Skylake @ 2.4 GHz (40 cores/node) CPU and memory amount of 8 GB per core.
-We encapsulated the above-mentioned software packages in Docker container images with available Dockerfiles at \url{https://github.com/ali4006/fuzzy-neurotools/tree/main/dockerfile}.
+We measured between-tool (BT) variability by running the pipelines
+described in~\cite{bowring2019exploring} with FSL version 5.0.10, AFNI
+version 18.1.09, and SPM12 version r7771 executed with GNU/Octave version
+5.2. All these software versions were identical to the study
+in~\cite{bowring2019exploring} except for SPM for which we used Octave
+instead of MATLAB to enable mathematical function instrumentation using
+Fuzzy Libmath. Indeed, MATLAB uses its own built-in mathematical functions,
+which prevents the use of Fuzzy Libmath. In AFNI, we set the number of
+threads to 7 \discuss{to reproduce the results
+in~\cite{bowring2019exploring} in a feasible execution time}. All the
+analyses were conducted on the CentOS 7.3 operating system. The
+computations were performed on \href{https://www.computecanada.ca}{Compute
+Canada's} Béluga cluster nodes, each with 2$\times$ Intel Gold 6148 Skylake
+@ 2.4 GHz (40 cores/node) CPU and 8~GB of RAM per core. We encapsulated the
+above-mentioned software packages in Docker container images available at
+\url{https://github.com/ali4006/fuzzy-neurotools/tree/main/dockerfile}
+\tristan{Ali, could you put them in the paper repo unless there is a good
+reason to keep them separate?}.
 
-The same subjects and analyses were conducted in the same configurations
-with the FL environment, to measure within-tool (WT) variability. We
-applied instrumentations at the virtual precision t=53 bits for
-double-precision floating-point values and t=24 bits for single-precision
-values. Three Fuzzy samples were generated for each subject and tool, to
-match the number of tool samples.
-We also captured further instrumentations for FSL tool for the virtual precisions ranged from 53 bits to 1 bit by steps of 2,
-such that only double-precision was changed and single-precision was set to 24 bits for $t >= 24$ bits,
-and both double- and single-precision simultaneously were changed for $t < 24$ bits.
+We measured within-tool (WT) variability by running the same analyses three
+times using Fuzzy Libmath with a virtual precision of $t=53$~bits for
+double-precision values and $t=24$~bits for single-precision values. These
+values were chosen such that the numerical perturbation simulates machine
+error, the relative error between a real number and its floating-point
+representation. The resulting samples are equally plausible estimates of
+the true numerical result. Moreover, we repeated the FSL analyses for virtual
+precisions ranging from $t=1$~bit to $t=24$~bits for single-precision
+and double-precision values. We also repeated the FSL analyses for virtual 
+precisions ranging from $t=24$~bits to $t=53$~bits for double-precision values, having 
+set the virtual precision to $t=24$~bits for single-precision values. 
 
-We evaluated WT and BT variabilities in thresholded and unthresholded group-level and subject-level t-statistics maps.
-We computed voxel-wise standard deviations of t-statistic values for each pair of tools
-and then compared the standard deviations in both conditions.
-We computed the WT standard deviation as the square root of the summation of variances between samples in each tool:
-
-\begin{equation} \label{eq:mca_std}
-  \begin{multlined}
-  \sigma_{WT} = \sqrt{\sigma_{tool1}^2 + \sigma_{tool2}^2}
-%  VAR_{x} = \sum_{i=1}^{n} \frac{(x_i - \bar{x})}{n-1}
-  \end{multlined}
+We evaluated WT and BT variability for thresholded as well as unthresholded
+group-level and subject-level t-statistics maps, by computing the
+standard deviation of t-statistic maps. For BT, we computed the standard deviation 
+across a given pair of tools.
+For WT, we computed the standard deviation across 
+Fuzzy Libmath samples of a given tool. Moreover, we computed WT for a pair of tools (A, B) as follows:
+\begin{equation}
+  \sigma_{WT(A,B)}^2 = \sigma_{WT(A)}^2 + \sigma_{WT(B)}^2,
+  \label{eq:wt-pair}
 \end{equation}
+where $WT(.)$ is the within-tool variability for a given tool.
 
-Moreover, we determined region-by-region Dice coefficients for the thresholded maps for each pair of tools.
-We characterized 360 regions that correspond to the cortical parcellation atlas
-in Human Connectome Project Multi-Modal Parcellation version 1.0 (HCP-MMP1.0)~\cite{glasser2016multi}.
-Dice values in WT are computed as the average pair-wise Dices among three Fuzzy samples for each pair of tools.
-All Dice scores were normalized by the region sizes and remained in the range of 0 to 1.
+Further, from the thresholded maps, we determined regional Dice
+coefficients between activation clusters in the 360 regions in the Human
+Connectome Project Multi-Modal Parcellation atlas version 1.0
+(HCP-MMP1.0)~\cite{glasser2016multi}. For BT, Dice coefficients were
+computed between activation maps produced by any pair of tools. For WT,
+Dice coefficients were computed pair-wise among the three Fuzzy samples of
+a given tool and averaged. All Dice coefficients were normalized by the
+region size \tristan{how?}. 
 
 \section{Results}
-All scripts and data to create the figures presented in this section are available at \url{https://github.com/big-data-lab-team/fuzzy-neurotools}.
+All scripts and data to reproduce the results are
+available at \url{https://github.com/big-data-lab-team/fuzzy-neurotools}.
 
-We ensured a successful replication of the analyses initially presented in~\cite{bowring2019exploring}
-by comparing t-statistic group maps with results in the original study.
-We found identical checksums in the results of FSL.
-Also, we could replicate results with the same SPM version and MATLAB as in the original study with visually imperceptible differences.
-%Changes in the SPM version and replacing Octave with MATLAB resulted in visually small differences which were still hard to distinguish between them.
-For AFNI, the activation maps were similar overall; however, visual differences were noticeable.
-This might be caused by the hardware optimizations such as dynamic scheduling~\cite{demmel2013numerical}.
-We could confirm that AFNI results were passed the quality checks by visually assessing the registration results of each individual subject.
 
-Summary statistics for the group-level unthresholded and thresholded t-statistics are reported in Table~\ref{table:pipeline-stats}.
-Overall, BT variability was larger than WT variability for both means and standard deviations.
-This was confirmed by computing the T-test and Wilcoxon signed-rank statistics between $BT(A, B)$, and $WT(A)$ and $WT(B)$ for $A$ and $B$ in $[FSL, SPM, AFNI]$.
-We obtained statistically significant values between BT and WT variability with t-value $> 70$ and p-value $< 0.05$ in both thresholded and unthresholded maps.
+\subsection{Sanity check}
+
+We verified the correctness of our analyses by comparing our unperturbed
+t-statistic group maps with the ones obtained
+in~\cite{bowring2019exploring}. For FSL, we found
+identical checksums. For SPM, the checksums were different but differences
+were visually imperceptible. For AFNI, the activation maps were similar
+overall, however, differences were more noticeable visually. 
+Overall, our results correctly reproduced
+the ones presented in~\cite{bowring2019exploring}. The observed
+differences were small and might be due to the use of Octave vs MATLAB in
+SPM, different operating systems \tristan{had you checked that?}, or
+different hardware. We performed visual quality control of the AFNI and SPM results
+for each individual subject.
+\tristan{add a figure to show the differences for SPM (Octave) and AFNI}
+
+\subsection{Summary group-level statistics}
+
+Summary statistics for the group-level unthresholded and thresholded
+t-statistics are reported in Table~\ref{table:pipeline-stats}.
+\tristan{From here this paragraph needs a full re-write} Overall, BT
+variability was larger than WT variability for both means and standard
+deviations \tristan{I don't think it's the case for stdev}. This was
+confirmed by computing the T-test and Wilcoxon signed-rank statistics
+between $BT(A, B)$, and $WT(A)$ and $WT(B)$ for $A$ and $B$ in $[FSL, SPM,
+AFNI]$. We obtained statistically significant values between BT and WT
+variability with t-value $> 70$ and p-value $< 0.05$ in both thresholded
+and unthresholded maps.
 
 %%%%%%%%%% Summary of statstics %%%%%%%%
 \setlength{\tabcolsep}{5pt}
@@ -330,64 +343,26 @@ We obtained statistically significant values between BT and WT variability with 
         {}   & AFNI                          &  0.434       & 0.524      & 0.128     & 0.135  \\
         \bottomrule
     \end{tabular}
-    \caption{Summary of voxel-wise mean and standard deviation in group-level t-statistics in BT and WT.}
+    \caption{Summary of voxel-wise mean and standard deviation in
+    group-level t-statistics in BT and WT \tristan{The caption doesn't
+    reflect what I thought this table represented, this needs
+    discussion. Also in Table III.}.}
     \label{table:pipeline-stats}
 \end{table}
-
-
-% \subsection{Comparing disparity in BT and WT}
-%\subsection{Spatial localization of disparity in BT and WT}
-\subsection{Group-level thresholded maps}
-
-%Fig 1
-Comparisons of standard deviations between thresholded images in WT and BT
-on MNI space are shown in Figure~\ref{fig:thresh-maps}.
-While we observed substantial BT variations with the average standard deviation 1.43,
-the magnitude of WT variations was much smaller with the average standard deviation 0.34,
-as was anticipated. 
-Moreover, the magnitude of WT variations reached the magnitued of BT variations
-in some regions, shown in white in Figure~\ref{fig:thresh-maps}-\textbf{C}.
-
-% Fig2
-Figure~\ref{fig:dice-thresh} compares regional normalized Dice coefficients of
-activated voxels, showing a linear correlation between BT and WT with p-value $< 0.05$ in all three pairs.
-
-%%%%%%%%%% Var. of Thresh %%%%%%%%
-\begin{figure*}[ht]
-    \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
-      \centering
-      \includegraphics[width=\textwidth]{figures/std/gl-thresh.png}
-      %\caption{Standard deviation of thresholded t-statistics map on template surface}
-    \caption{Thresholded group t-statistics standard deviations computed between tools (\textbf{A}) and within tools (\textbf{B}), and difference between them (\textbf{C}). }
-    % so that bright blue areas indicate more similar order of magnitude of variations in both conditions,
-    %and vise versa for the darkder regions.}
-    \label{fig:thresh-maps}
-    \end{minipage}}
-  \end{figure*}
-
-
-  %%%%%%%%%% Dice plot of thresholded tstats%%%%%%%%
-  \begin{figure}[ht]
-    \fbox{\begin{minipage}{\dimexpr \columnwidth-2\fboxsep-2\fboxrule}
-    \centering
-    \includegraphics[width=\columnwidth]{figures/dices_corr.png}
-    \caption{Normalized, regional Dice coefficients of activated voxels for
-    BT and WT using the HCP-MMP1.0 parcellation of
-    ~\cite{glasser2016multi}.}
-    \label{fig:dice-thresh}
-    \end{minipage}}
-  \end{figure}
-
 
 
 \subsection{Group-level unthresholded maps}
 % \subsection{Variability of unthresholded statistical maps}
 
-% Fig3
-Similar conclusions are drawn from the unthresholded t-statistics maps
-(Figure~\ref{fig:unthresh-maps}). BT variability is larger than WT variability overall, however,
-BT and WT variability are comparable in some regions. 
+Figure~\ref{fig:unthresh-maps} compares t-statistics standard deviation maps
+across different pipelines (BT variability) and across Fuzzy Libmath
+samples (WT variability). While WT variability remains lower than BT
+variability overall, it approaches it in some regions, shown in white in
+Figure~\ref{fig:unthresh-maps}-\textbf{C}. 
 
+Interestingly, a group of voxels \tristan{...}
+BT and WT variability appear correlated in some regions
+(Figure~\ref{fig:unthresh-correlation}).
 
 %%%%%%%%%% Var. of Unthresh %%%%%%%%
 \begin{figure*}[ht]
@@ -399,16 +374,6 @@ BT and WT variability are comparable in some regions.
     \label{fig:unthresh-maps}
     \end{minipage}}
   \end{figure*}
-
-
-% Fig4
-Figure~\ref{fig:unthresh-correlation} highlights the voxel-wise standard deviations in WT and BT variability
-with the identity lines that indicate voxels with the standard deviation of $BT = WT$.
-The identity area is represented on MNI space in the second row in Figure~\ref{fig:unthresh-correlation}
-for the voxels with the magnitude of standard deviation $> 0.1$ and the satndard deviation ratio of $0.5 < BT/WT < 2$.
-The maps show the spatial localization of parts of the brain where the numerical variability simulated BT variability.
-This refines the presented results in Figure~\ref{fig:unthresh-maps}-\textbf{C},
-indicated voxels with similar magnitude of BT and WT variations were uniformly distributed across the brain.
 
   %%%%%%%%%% Corr. plot of tstats%%%%%%%%
   \begin{figure*}[ht]
@@ -425,18 +390,18 @@ indicated voxels with similar magnitude of BT and WT variations were uniformly d
         %\caption{Standard deviation of thresholded t-statistics map on template surface}
       \end{subfigure}
       \caption{
-        Scatter plots of unthresholded group t-statistics standard deviations computed between tools and within tools.
-        The identity line distinguishes voxels where the standard deviation BT is equal to WT.
-        Voxels with the standard deviation ratio of BT/WT in the interval (0.5, 2) are represented on brain maps in the second row.}
+        Voxel-wise comparison of BT and WT variabilty. The bottom row represents 
+        voxels where the BT/WT ration is in (0.5, 2).}
     \label{fig:unthresh-correlation}
     \end{minipage}}
   \end{figure*}
 
-
   \subsection{Subject-level unthresholded maps}
 
-  Summary statistics for the subject-level unthresholded t-statistics are reported in Table~\ref{table:unthresh-maps-subjects}.
-  Overall, results represent similar findings with group-level t-statistics between WT and BT variations.
+  Summary statistics for subject-level unthresholded t-statistics maps are
+  reported in Table~\ref{table:unthresh-maps-subjects}. Overall, results
+  represent similar findings with group-level t-statistics between WT and
+  BT variations.
 
   Figure~\ref{fig:unthresh-maps-sbj} shows BT and WT variability of the
   unthresholded t-statistics for the subject with the highest WT
@@ -523,7 +488,34 @@ show significant WT variability, particularly for some regions in the frontal, p
     \end{minipage}}
   \end{figure}
 
+  \subsection{Group-level thresholded maps}
 
+  Similar conclusions are drawn from the unthresholded t-statistics maps
+  (Figure~\ref{fig:thresh-maps}).  Figure~\ref{fig:dice-thresh} compares regional normalized Dice coefficients of
+  activated voxels, showing a linear correlation between BT and WT with
+  p-value $< 0.05$ in all three pairs.
+  
+  %%%%%%%%%% Var. of Thresh %%%%%%%%
+  \begin{figure*}[ht]
+      \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
+        \centering
+        \includegraphics[width=\textwidth]{figures/std/gl-thresh.png}
+      \caption{Thresholded group t-statistics standard deviation maps
+      computed across tools (\textbf{A}) and Fuzzy Libmath samples
+      (\textbf{B}) as defined in Eq~\ref{eq:wt-pair}. \tristan{Change the column headers to (FSL, SPM) instead of FSL - SPM (everywhere).}}
+      \label{fig:thresh-maps}
+      \end{minipage}}
+    \end{figure*}
+  
+    % %%%%%%%%%% Dice plot of thresholded tstats%%%%%%%%
+    \begin{figure*}[ht]
+      \centering
+      \includegraphics[width=\textwidth]{figures/dices_corr.png}
+      \caption{Normalized regional Dice coefficients of activated voxels for
+      BT and WT using the HCP-MMP1.0 parcellation of
+      ~\cite{glasser2016multi}.}
+      \label{fig:dice-thresh}
+    \end{figure*}
 
 \section{Discussion}
 
@@ -554,7 +546,7 @@ This is consistent with the observations in~\cite{bowring2021isolating} where id
 but substantially low Dice coefficient for activations in the thresholded maps.
 This raises further investigations on thresholding techniques to reduce the associated instabilities.
 
-Given that FL only perturbs basic mathematical functions, we expect more numerical variability by perturbing linear algebra,
+Given that Fuzzy Libmath only perturbs basic mathematical functions, we expect more numerical variability by perturbing linear algebra,
 in particular for non-scalar types like vectors or matrices. For the future study, this can be evaluated using MCA-instrumented versions
 of BLAS and LAPACK along with other libraries available in the Fuzzy project in Verificarlo's GitHub repository at github.com/verificarlo/fuzzy.
 
@@ -563,7 +555,7 @@ of BLAS and LAPACK along with other libraries available in the Fuzzy project in 
 
 We presented a comparison study between numerical variability introduced by floating-point perturbations and tool variability arised from software package variations.
 For an fMRI analysis, we measured a significant variability in both conditions, which was comparable for some brain regions.
-We showed the FL library as a valuable model based on MCA method for simulating the numerical variability.
+We showed the Fuzzy Libmath library as a valuable model based on MCA method for simulating the numerical variability.
 Moreover, we can leverage the MCA-instrumented libraries for simulating the numerical uncertainty in different studies.
 
 Further work can be done to evaluate and localize the numerical stabilities within tools by focusing on the particular parts of
