@@ -224,15 +224,16 @@ addition between the original function output and a floating-point zero.
 }
 \lstinputlisting[caption=Sample wrapper function (C code), label=algo:wrapper, style=customasm]{wrapper.c}
 
-\tristan{To be discussed with Ali, this paragraph explains what was done but not 
-the purpose or the result of it.}
-The presented method does not require any particular software
-instrumentation in the data analysis code: it only assumes that executables
-are dynamically linked against GNU libc. For this purpose, (1) we captured
-the list of dynamic library dependencies using the \texttt{ldd} Linux
-utility for the software executables, (2) we traced the system library
-calls using \texttt{ltrace} Linux program while running the pipeline
-processes.
+\tristan{
+Explain how the instrumentation was validated:
+\begin{enumerate}
+\item Verify that two consecutive IEEE executions are identical (no random effects)
+\item Verify that all pipelines use libm
+\item List all the dependencies of all the pipelines using ldd 
+\item Verify that no math function is implemented in these dependencies
+\item Verify that fuzzy libmat has an effect on the results
+\end{enumerate}
+}
 
 \subsection{Data processing}
 
@@ -286,7 +287,7 @@ Connectome Project Multi-Modal Parcellation atlas version 1.0
 computed between activation maps produced by any pair of tools. For WT,
 Dice coefficients were computed pair-wise among the three Fuzzy samples of
 a given tool and averaged. All Dice coefficients were normalized by the
-region size \tristan{how?}. 
+region size \tristan{explain how you did this: x = (dice x region size) ; x = (x-xmin)/(xmax-xmin)}. 
 
 \section{Results}
 All scripts and data to reproduce the results are
@@ -391,7 +392,7 @@ BT and WT variability appear correlated in some regions
       \end{subfigure}
       \caption{
         Voxel-wise comparison of BT and WT variabilty. The bottom row represents 
-        voxels where the BT/WT ration is in (0.5, 2).}
+        voxels where the BT/WT ratio is in (0.5, 2).}
     \label{fig:unthresh-correlation}
     \end{minipage}}
   \end{figure*}
