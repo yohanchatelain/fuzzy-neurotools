@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 import pickle as pkl
 import inspect
 from nilearn.image import math_img
-from lib import dice
 from statistics import mean
 import scipy.stats as stat
 from scipy.signal import resample
@@ -582,39 +581,39 @@ def plot_dices(dices_):
                 r_sizes.append(s)
                 r_name.append(l_[i])
     
-            # Plot Normalize dice values by region size
-            tool_norm = np.array(tool_list)*np.array(r_sizes)
-            mca_norm = np.array(mca_list)*np.array(r_sizes)
-            # Normalization between [0-1] = x -xmin/ xmax – xmin
-            tool_norm = (tool_norm - np.min(tool_norm)) / (np.max(tool_norm) - np.min(tool_norm))
-            mca_norm = (mca_norm - np.min(mca_norm)) / (np.max(mca_norm) - np.min(mca_norm))
+            # Plot Dice values by region size
+            tool_dice = np.array(tool_list)
+            mca_dice = np.array(mca_list)
+            tool_dice_nonz = [ tool_dice[i] for i in range(len(tool_dice)) if tool_dice[i] != 0 and mca_dice[i] != 0]
+            mca_dice_nonz = [ mca_dice[i] for i in range(len(tool_dice)) if tool_dice[i] != 0 and mca_dice[i] != 0]
+            sizes_nonz = [ r_sizes[i] for i in range(len(tool_dice)) if tool_dice[i] != 0 and mca_dice[i] != 0]
+            tools_nonz = [ tool_list[i] for i in range(len(tool_dice)) if tool_dice[i] != 0 and mca_dice[i] != 0]
+            tool_dice = tool_dice_nonz
+            mca_dice = mca_dice_nonz
+            print(len(tool_dice), len(mca_dice))
 
-            # regions that BT=0 and WT>0.93
-            x = np.where((tool_norm == 0) & (mca_norm > 0.93) , r_name, None)
-            res = [i for i in x if i]
-            print("BT only var regions in {}:\n{}".format(tool_, res))
-                
-            # Compute regression line without zero values
-            nonz_tool_norm = []
-            nonz_mca_norm = []
-            for i in range(len(tool_norm)):
-                if tool_norm[i] != 0  and mca_norm[i] != 0:
-                    nonz_tool_norm.append(tool_norm[i])
-                    nonz_mca_norm.append(mca_norm[i])
+            # Is there a correlation between tool_dice and region size?
+            _, _, r, p, _ = scipy.stats.linregress(tool_dice, sizes_nonz)
+            print(f'BT Dice and region size are correlated (p={p})')
+            # Is there a correlation between mca_dice and region size?
+            _, _, r, p, _ = scipy.stats.linregress(mca_dice, sizes_nonz)
+            print(f'WT Dice and region size are correlated (p={p})')
 
-            slope_norm, intercept_norm, r_norm, p_norm, stderr = scipy.stats.linregress(nonz_tool_norm, nonz_mca_norm)
-            line_norm = f'Regression line: y={intercept_norm:.2f}+{slope_norm:.2f}x' #, r={r_norm:.2f}, p={p_norm:.10f}
-            y_norm = intercept_norm + slope_norm * np.array(tool_list)
-
-            ax.plot(tool_norm, mca_norm, linewidth=0, alpha=.5, color=colors[ind_], marker='o', label='{}'.format(tool_.upper()))
-            ax.plot(tool_list, y_norm, color=colors[ind_], alpha=.7, label=line_norm)
-            ax.set_xlabel('Normalized Dice scores in BT', fontsize=22)
-            ax.set_ylabel('Normalized Dice scores in WT', fontsize=22)
-            # ax.set_title('Normalized Dice scores from thresholded maps')
+            slope, intercept, r, p, stderr = scipy.stats.linregress(mca_dice, tool_dice)
+            line = f'Regression line: y={intercept:.2f}+{slope:.2f}x (r={r:.2f}, p={p})'
+            y = intercept + slope * np.array(mca_dice)
+            print(sorted(mca_dice))
+            
+            ax.plot(mca_dice, tool_dice, linewidth=0, alpha=.5, color=colors[ind_], marker='o', label='{}'.format(tool_.upper()))
+            ax.plot(mca_dice, y, color=colors[ind_], alpha=.7, label=line)
+            ax.set_xlabel('WT Dice', fontsize=22)
+            ax.set_ylabel('BT Dice', fontsize=22)
             ax.legend(fontsize=16)
             ax.tick_params(axis='both', labelsize=18)
     #plt.show()
-    plt.savefig('./paper/figures/dices_corr.png', bbox_inches='tight')
+    name = './paper/figures/dices_corr.png'
+    print(f'Dice plot saved in {name}')
+    plt.savefig(name, bbox_inches='tight')
 
 
 ############# PRINT STATS
@@ -880,14 +879,14 @@ def main(args=None):
     # plot_rmse_nearest(all_rmse)
 
     ### Compute Dice scores and then plot (Fig 2)
-    # image_parc = './data/MNI-parcellation/HCPMMP1_on_MNI152_ICBM2009a_nlin_resampled.splitLR.nii.gz'
-    # regions_txt = './data/MNI-parcellation/HCP-MMP1_on_MNI152_ICBM2009a_nlin.txt'
-    # if os.path.exists('./data/dices_.pkl'):
-    #     dices_ = load_variable('dices_')
-    #     plot_dices(dices_)
-    # else:
-    #     dices_ = get_dice_values(regions_txt, image_parc, tool_results, mca_results)
-    #     plot_dices(dices_)
+    image_parc = './data/MNI-parcellation/HCPMMP1_on_MNI152_ICBM2009a_nlin_resampled.splitLR.nii.gz'
+    regions_txt = './data/MNI-parcellation/HCP-MMP1_on_MNI152_ICBM2009a_nlin.txt'
+    if os.path.exists('./data/dices_.pkl'):
+        dices_ = load_variable('dices_')
+        plot_dices(dices_)
+    else:
+        dices_ = get_dice_values(regions_txt, image_parc, tool_results, mca_results)
+        plot_dices(dices_)
 
     ### Print stats (Table 2)
     # print_gl_stats(std_path)
