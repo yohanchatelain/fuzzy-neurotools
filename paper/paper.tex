@@ -224,16 +224,12 @@ addition between the original function output and a floating-point zero.
 }
 \lstinputlisting[caption=Sample wrapper function (C code), label=algo:wrapper, style=customasm]{wrapper.c}
 
-\tristan{
-Explain how the instrumentation was validated:
-\begin{enumerate}
-\item Verify that two consecutive IEEE executions are identical (no random effects)
-\item Verify that all pipelines use libm
-\item List all the dependencies of all the pipelines using ldd 
-\item Verify that no math function is implemented in these dependencies
-\item Verify that fuzzy libmat has an effect on the results
-\end{enumerate}
-}
+To validate instrumentations, we verified that two consecutive IEEE executions are identical;
+there are no randomness effects in all pipelines.
+We also listed all the pipeline library dependencies using the ldd Linux utility.
+We ensured that (1) all pipelines are dynamically linked to the libmath library
+(2) there is no alternative implementation for the basic mathematical functions in these dependencies.
+Finally, we verified that Fuzzy libmath affects computational results.
 
 \subsection{Data processing}
 
@@ -252,9 +248,7 @@ computations were performed on \href{https://www.computecanada.ca}{Compute
 Canada's} Béluga cluster nodes, each with 2$\times$ Intel Gold 6148 Skylake
 @ 2.4 GHz (40 cores/node) CPU and 8~GB of RAM per core. We encapsulated the
 above-mentioned software packages in Docker container images available at
-\url{https://github.com/ali4006/fuzzy-neurotools/tree/main/dockerfile}
-\tristan{Ali, could you put them in the paper repo unless there is a good
-reason to keep them separate?}.
+\url{https://github.com/big-data-lab-team/fuzzy-neurotools}.
 
 We measured within-tool (WT) variability by running the same analyses three
 times using Fuzzy Libmath with a virtual precision of $t=53$~bits for
