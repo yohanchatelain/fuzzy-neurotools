@@ -245,9 +245,10 @@ in~\cite{bowring2019exploring} except for SPM for which we used Octave
 instead of MATLAB to enable mathematical function instrumentation using
 Fuzzy Libmath. Indeed, MATLAB uses its own built-in mathematical functions,
 which prevents the use of Fuzzy Libmath. In AFNI, we set the number of
-threads to 7 \discuss{to reproduce the results
-in~\cite{bowring2019exploring} in a feasible execution time}. All the
-analyses were conducted on the CentOS 7.3 operating system. The
+threads to 7 even though AFNI executions
+in~\cite{bowring2019exploring} were single-threaded. This was meant to
+reduce the time overhead resulting from Fuzzy Libmath instrumentation. All
+the analyses were conducted on the CentOS 7.3 operating system. The
 computations were performed on \href{https://www.computecanada.ca}{Compute
 Canada's} Béluga cluster nodes, each with 2$\times$ Intel Gold 6148 Skylake
 @ 2.4 GHz (40 cores/node) CPU and 8~GB of RAM per core. We encapsulated the
