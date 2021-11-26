@@ -510,6 +510,7 @@ show significant WT variability, particularly for some regions in the frontal, p
   
     % %%%%%%%%%% Dice plot of thresholded tstats%%%%%%%%
     \begin{figure*}[ht]
+      \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
       \centering
       \includegraphics[width=\textwidth]{figures/dice_analysis-plot.png}
       \caption{Heatmap of confusion matrices for instability of regional activations
@@ -517,6 +518,7 @@ show significant WT variability, particularly for some regions in the frontal, p
       A region is unstable (=1) if it has different activation behavior in both tools
       for BT or different fuzzy samples in each tool for WT; otherwise, it is stable (=0).}
       \label{fig:cm-thresh}
+    \end{minipage}}
     \end{figure*}
 
 \section{Discussion}
