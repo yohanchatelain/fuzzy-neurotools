@@ -103,6 +103,8 @@ As a result of numerical perturbations, we discovered a very low numerical preci
 In a related study~\cite{kiar2020numerical}, the instability of results was explored by instrumenting a connectome estimation pipeline with the MCA technique.
 These works demonstrate the necessity of numerical uncertainty quantification for understanding related issues that hamper the computational reproducibility of analyses.
 
+\tristan{We investigate two questions: (1) how do numerical and between-tool variability compare? (2) are they correlated?}
+
 In this work, we reproduce an fMRI analysis in~\cite{bowring2019exploring} with different neuroimaging software packages in the presence of the Fuzzy environment,
 and then quantify the variability across tools and the numerical variability in results.
 We call the cross-software variation and numerical variation, between tool (BT) and within tool (WT) variability, respectively.
@@ -122,8 +124,8 @@ This comparative study reveals the importance of numerical variability and motiv
 
 We replicated the fMRI analysis described as study `ds000001'
 in~\cite{schonberg2012decreasing}, relying on the data publicly available
-in OpenNeuro at \url{https://openneuro.org/datasets/ds000001} and using the
-three main software packages for fMRI data processing, namely FMRIB
+in OpenNeuro at \url{https://openneuro.org/datasets/ds000001} and using
+three widely-used software packages for fMRI data processing, namely FMRIB
 Software Library (FSL)~\cite{jenkinson2012fsl}, Analysis of Functional
 NeuroImages (AFNI)~\cite{cox1996afni}, and Statistical Parametric
 Mapping (SPM)~\cite{penny2011statistical}. We selected this dataset because
@@ -139,7 +141,7 @@ behavior over three scanning sessions~\cite{schonberg2012decreasing}. We
 reused the preprocessing, first-level, and second-level analyses
 implemented by~\cite{bowring2019exploring} consistently across all three
 software packages. Table~\ref{table:pipeline-steps} summarizes the analytical steps in each
-pipeline. More details are available in~\cite{bowring2019exploring}.
+pipeline.
 
 
 %%%%%%%%%% Summary of statstics %%%%%%%%
@@ -178,31 +180,30 @@ pipeline. More details are available in~\cite{bowring2019exploring}.
 
 \subsection{Fuzzy Libmath environment}
 
-To introduce controlled amounts of numerical noise in the analyses, we used
+To introduce numerical noise in the analyses, we used
 the Fuzzy Libmath library~\cite{salari2021accurate}, a version of the GNU
 mathematical library (libmath) instrumented with Monte-Carlo arithmetic.
 Monte-Carlo arithmetic simulates roundoff and catastrophic cancellation
 errors by introducing a controlled amount of noise in the floating-point
-operations through the following perturbation model~\cite{Parker1997-qq}:
+operations through the following perturbation~\cite{Parker1997-qq}:
 
 \begin{equation} \label{eq:mca_inexact}
-  inexact(x) = x + 2^{e_x-t}\xi
+  inexact(x) = x + 2^{e_x-t}\xi,
 \end{equation}
-
 where $e_x$ is the exponent in the floating-point representation of $x$,
-$t$ is the virtual precision --- the number of unperturbed bits in the
-mantissa of $x$ ---, and $\xi$ is a random uniform variable of
-$(-\frac{1}{2}, \frac{1}{2})$. The perturbation is introduced using 
+$t$ is the virtual precision (the number of unperturbed bits in the
+mantissa of $x$), and $\xi$ is a random uniform variable of
+$(-\frac{1}{2}, \frac{1}{2})$. We introduced the perturbation using 
 Verificarlo~\cite{denis2015verificarlo}, an LLVM compiler supporting Monte-Carlo 
-arithmetic and other types of numerical analyses.
+arithmetic and other types of numerical instrumentations.
 
-The instrumented libmath functions are loaded in the pipeline using
-LD\_PRELOAD, a Linux mechanism to force load a shared library into an
-executable. This allows functions defined in Fuzzy Libmath to transparently
+We loaded the instrumented libmath functions in the pipeline using
+LD\_PRELOAD, a Linux mechanism to force-load a shared library into an
+executable. This mechanism allows functions defined in Fuzzy Libmath to transparently
 overload the original ones without the need to modify or recompile the
 analysis pipeline.
 
-Fuzzy Libmath only introduces perturbations in the output values of
+Fuzzy Libmath introduces numerical perturbations in the values returned by
 mathematical functions but not in their input values or within their
 implementation. This is done by wrapping the original functions and
 applying function \texttt{inexact} to their returned values.
@@ -224,20 +225,21 @@ addition between the original function output and a floating-point zero.
 }
 \lstinputlisting[caption=Sample wrapper function (C code), label=algo:wrapper, style=customasm]{wrapper.c}
 
-To validate instrumentations, we verified that two consecutive IEEE executions are identical;
-there are no randomness effects in all pipelines.
-We also listed all the pipeline library dependencies using the ldd Linux utility.
-We ensured that (1) all pipelines are dynamically linked to the libmath library
-(2) there is no alternative implementation for the basic mathematical functions in these dependencies.
-Finally, we verified that Fuzzy libmath affects computational results.
+To validate our instrumentations, we first verified that non-instrumented
+executions of the same pipeline on the same dataset led to identical
+results \tristan{did you fix random seeds and if so in which pipelines?}. We also listed the pipeline
+library dependencies using the \texttt{ldd} Linux utility and verified that
+(1) the tested pipelines were dynamically linked to the GNU libmath library, and 
+(2) there was no alternative implementation of elementary mathematical functions in the pipeline dependencies.
+Finally, we verified that the use of Fuzzy libmath affected computational results.
 
 \subsection{Data processing}
 
 We measured between-tool (BT) variability by running the pipelines
 described in~\cite{bowring2019exploring} with FSL version 5.0.10, AFNI
 version 18.1.09, and SPM12 version r7771 executed with GNU/Octave version
-5.2. All these software versions were identical to the study
-in~\cite{bowring2019exploring} except for SPM for which we used Octave
+5.2. These software versions were identical to the study
+in~\cite{bowring2019exploring} except for SPM for which we used GNU/Octave
 instead of MATLAB to enable mathematical function instrumentation using
 Fuzzy Libmath. Indeed, MATLAB uses its own built-in mathematical functions,
 which prevents the use of Fuzzy Libmath. In AFNI, we set the number of
@@ -255,9 +257,9 @@ We measured within-tool (WT) variability by running the same analyses three
 times using Fuzzy Libmath with a virtual precision of $t=53$~bits for
 double-precision values and $t=24$~bits for single-precision values. These
 values were chosen such that the numerical perturbation simulates machine
-error, the relative error between a real number and its floating-point
-representation. The resulting samples are equally plausible estimates of
-the true numerical result. Moreover, we repeated the FSL analyses for virtual
+error, the minimal distance between two consecutive floating-point numbers. The resulting samples are equally plausible estimates of
+the true numerical result. Moreover, to evaluate numerical perturbations at different magnitudes, 
+we repeated the FSL analyses for virtual
 precisions ranging from $t=1$~bit to $t=24$~bits for single-precision
 and double-precision values. We also repeated the FSL analyses for virtual 
 precisions ranging from $t=24$~bits to $t=53$~bits for double-precision values, having 
@@ -265,21 +267,24 @@ set the virtual precision to $t=24$~bits for single-precision values.
 
 We evaluated WT and BT variability for thresholded as well as unthresholded
 group-level and subject-level t-statistics maps, by computing the
-standard deviation of t-statistic maps. For BT, we computed the standard deviation 
+standard deviation of t-statistic maps across pipelines (BT) or Fuzzy Libmath samples (WT). For BT, we computed the standard deviation 
 across a given pair of tools.
-For WT, we computed the standard deviation across 
-Fuzzy Libmath samples of a given tool. Moreover, we computed WT for a pair of tools (A, B) as follows:
+For WT, we computed the standard deviation across the 3 
+Fuzzy Libmath samples of a given tool. Moreover, we computed WT variability for a pair of tools (A, B) as follows:
 \begin{equation}
   \sigma_{WT(A,B)}^2 = \sigma_{WT(A)}^2 + \sigma_{WT(B)}^2,
   \label{eq:wt-pair}
 \end{equation}
-where $WT(.)$ is the within-tool variability for a given tool.
+where $\sigma_{WT(.)}$ is the within-tool variability for a given tool.
 
-Further, from the thresholded maps, we determined regional instability 
-between activation clusters in the 360 regions in the Human
-Connectome Project Multi-Modal Parcellation atlas version 1.0
-(HCP-MMP1.0)~\cite{glasser2016multi}. For BT, a region was unstable if it had different activation behavior between pair of tools.
-For WT, we considered a region unstable if it had a blinking activation between Fuzzy samples of a given tool.
+Further, from the thresholded maps, we determined regional instability
+between activation clusters in the 360 regions in the Human Connectome
+Project Multi-Modal Parcellation atlas version 1.0
+(HCP-MMP1.0)~\cite{glasser2016multi}. For BT, we considered a region
+unstable for a pair of tools if it contained activated voxels for a tool
+but not for the other one. For WT, we considered a region unstable for a
+pair of tools (A, B) if for tool A or tool B it contained activated voxels only for some Fuzzy Libmath
+samples.
 
 \section{Results}
 All scripts and data to reproduce the results are
@@ -292,35 +297,36 @@ We verified the correctness of our analyses by comparing our unperturbed
 t-statistic group maps with the ones obtained
 in~\cite{bowring2019exploring}. For FSL, we found
 identical checksums. For SPM, the checksums were different but differences
-were visually imperceptible. For AFNI, the activation maps were similar
+were visually unnoticeable. For AFNI, the activation maps were similar
 overall, however, differences were more noticeable visually. 
-Overall, our results correctly reproduced
-the ones presented in~\cite{bowring2019exploring}. The observed
-differences were small and might be due to the use of Octave vs MATLAB in
-SPM or different hardware. We performed visual quality control of the AFNI and SPM results
-for each individual subject.
+The observed
+differences remained small and might be due to the use of Octave vs MATLAB in
+SPM. We performed visual quality control of the AFNI and SPM results
+for each individual subject \tristan{and confirmed that ...}.
 \tristan{add a figure to show the differences for SPM (Octave) and AFNI}
 
 \subsection{Summary group-level statistics}
 
 Summary statistics for the group-level unthresholded and thresholded
-t-statistics are reported in Table~\ref{table:pipeline-stats}.
-Overall, BT variability was larger than WT variability in both thresholded and unthresholded maps.
-This was confirmed by computing the T-test and Wilcoxon signed-rank statistics between BT and WT as:
+t-statistics are reported in Table~\ref{table:pipeline-stats}. BT
+variability for tool pair (A, B) was larger than WT variability for tool A and tool B for any tool pair, in both thresholded and
+unthresholded maps (Wilcoxon signed-rank test, t-test
+p~\textless~$10^{-163}$ for all tests).
+% This was confirmed by computing the T-test and Wilcoxon signed-rank statistics between BT and WT as:
 
-\begin{equation*}
-  \left\{
-    \begin{aligned}
-      & BT(a, b), WT(a),\\
-      & BT(a, b), WT(b)
-    \end{aligned}  
-    \quad  a,b \in [FSL, SPM, AFNI] \;
-  \right\}
-  \label{eq:t-tests}
-\end{equation*}
+% \begin{equation*}
+%   \left\{
+%     \begin{aligned}
+%       & BT(a, b), WT(a),\\
+%       & BT(a, b), WT(b)
+%     \end{aligned}  
+%     \quad  a,b \in [FSL, SPM, AFNI] \;
+%   \right\}
+%   \label{eq:t-tests}
+% \end{equation*}
 
-We obtained statistically significant values between BT and WT
-variability with t-value $> 70$ and p-value $< 0.05$.
+% We obtained statistically significant values between BT and WT
+% variability with t-value $> 70$ and p-value $< 0.05$.
 
 %%%%%%%%%% Summary of statstics %%%%%%%%
 \setlength{\tabcolsep}{5pt}
@@ -343,8 +349,8 @@ variability with t-value $> 70$ and p-value $< 0.05$.
         {}   & AFNI                          &  0.434       & 0.524      & 0.128     & 0.135  \\
         \bottomrule
     \end{tabular}
-    \caption{Summary statistics of voxel-wise standard deviations
-    in group-level t-statistics in BT and WT.}
+    \caption{Voxel-wise mean and standard deviation of BT and WT variability
+    in group-level t-statistics maps.}
     \label{table:pipeline-stats}
 \end{table}
 
@@ -352,15 +358,12 @@ variability with t-value $> 70$ and p-value $< 0.05$.
 \subsection{Group-level unthresholded maps}
 % \subsection{Variability of unthresholded statistical maps}
 
-Figure~\ref{fig:unthresh-maps} compares t-statistics standard deviation maps
-across different pipelines (BT variability) and across Fuzzy Libmath
-samples (WT variability). While WT variability remains lower than BT
-variability overall, it approaches it in some regions, shown in white in
-Figure~\ref{fig:unthresh-maps}-\textbf{C}. 
-
-Interestingly, a group of voxels \tristan{...}
-BT and WT variability appear correlated in some regions
-(Figure~\ref{fig:unthresh-correlation}).
+Figure~\ref{fig:unthresh-maps} compares BT and WT variability in
+unthresholded maps. WT variability remains lower than BT variability
+overall. Interestingly, BT and WT variability appear correlated in a subset
+of voxels scattered across the brain
+(Figure~\ref{fig:unthresh-correlation}), but the reason for this apparent
+correlation remains unknown.
 
 %%%%%%%%%% Var. of Unthresh %%%%%%%%
 \begin{figure*}[ht]
@@ -368,7 +371,7 @@ BT and WT variability appear correlated in some regions
       \centering
       \includegraphics[width=\textwidth]{figures/std/gl-unthresh.png}
       %\caption{Standard deviation of thresholded t-statistics map on template surface}
-    \caption{Unthresholded group t-statistics standard deviations computed between tools (\textbf{A}) and within tools (\textbf{B}), and difference between them (\textbf{C}).}
+    \caption{Unthresholded group-level variability computed between tools (\textbf{A}) and within tools (\textbf{B}), and difference between them (\textbf{C}).}
     \label{fig:unthresh-maps}
     \end{minipage}}
   \end{figure*}
@@ -388,7 +391,7 @@ BT and WT variability appear correlated in some regions
         %\caption{Standard deviation of thresholded t-statistics map on template surface}
       \end{subfigure}
       \caption{
-        Voxel-wise comparison of BT and WT variabilty. The bottom row represents 
+        Voxel-wise comparison of BT and WT variabilty. The bottom row shows 
         voxels where the BT/WT ratio is in (0.5, 2).}
     \label{fig:unthresh-correlation}
     \end{minipage}}
@@ -397,18 +400,15 @@ BT and WT variability appear correlated in some regions
   \subsection{Subject-level unthresholded maps}
 
   Summary statistics for subject-level unthresholded t-statistics maps are
-  reported in Table~\ref{table:unthresh-maps-subjects}. Overall, results
-  represent similar findings with group-level t-statistics between WT and
-  BT variations.
+  reported in Table~\ref{table:unthresh-maps-subjects}. As for group-level
+  maps, BT variability was consistently larger than WT variability
+  \tristan{report statistical tests}.
 
-  Figure~\ref{fig:unthresh-maps-sbj} shows BT and WT variability of the
-  unthresholded t-statistics for the subject with the highest WT
-  variability among the 16 subjects.
-  For this particular subject, we observed substantial WT variations with the average standard deviation 0.099 compared to 
-  the average standard deviation 0.466 for BT variations.
-  As can be seen in the Figure, WT variability approaches and even surpasses BT variability in some regions.
-  This subject also revealed that WT variability mainly concentrated in some regions  
-  contrary to the corresponding variability from unthresholded group-level t-statistics which was uniformly distributed across the brain.
+  Figure~\ref{fig:unthresh-maps-sbj} shows BT and WT variability for
+  the subject with the highest WT variability among the 16 subjects. For
+  this particular subject, WT variability approaches and even surpasses BT
+  variability in some regions. This subject also revealed that WT
+  variability mainly concentrated in some regions.
 
   %%%%%%%%%% Summary of statstics %%%%%%%%
 \setlength{\tabcolsep}{5pt}
@@ -431,8 +431,8 @@ BT and WT variability appear correlated in some regions
         {}   & AFNI                          &  0.108       & 0.131     \\
         \bottomrule
     \end{tabular} 
-    \caption{Summary statistics of voxel-wise standard deviations in subject-level t-statistics in BT and WT.
-    The voxel-wise standard deviations were averaged across 16 subjects.}
+    \caption{Voxel-wise mean and standard deviation of BT and WT variability
+    in subject-level t-statistics maps (averages on 16 subjects).}
     \label{table:unthresh-maps-subjects}
 \end{table}
 
@@ -443,25 +443,19 @@ BT and WT variability appear correlated in some regions
     \centering
     \includegraphics[width=\textwidth]{figures/std/sbj05-std.png}
     %\caption{Standard deviation of thresholded t-statistics map on template surface}
-    \caption{Unthresholded subject t-statistics standard deviations computed between tools (\textbf{A}) and within tools (\textbf{B}), and difference between them (\textbf{C}).
-    This is for the subject with the highest WT variability.}
+    \caption{For subject with highest WT variability, unthresholded subject-level variability computed between tools (\textbf{A}) and within tools (\textbf{B}), and difference between them (\textbf{C}).}
   \label{fig:unthresh-maps-sbj}
   \end{minipage}}
 \end{figure*}
 
-\subsection{WT variability across virtual precisions}
+\subsection{Group-level untresholded maps at different virtual precisions}
 
-While the previous results were obtained at the virtual precision of 53~bits for double-precision floating-point values
-and 24~bits for single-precision values, we evaluated WT variability across different virtual precisions for FSL.
-Figure~\ref{fig:across-precisions} represents the root-mean-square error (RMSE) between the standard deviations per voxel
-in BT and WT resulted from the Fuzzy FSL,
-substantiating that how variabilities in both conditions are close to each other across different virtual precisions.
-
-We determined the virtual precision of t=17 bits as the precision that minimized the RMSE between BT and WT on average.
-This is the precision that numerical perturbations in FSL more closely simulated BT variability.
-The brain maps of standard deviations between BT and WT obtained from the Fuzzy FSL at t=17 bits (Figure~\ref{fig:gnp-mni})
-show significant WT variability, particularly for some regions in the frontal, parietal, and limbic lobes, close to BT variability.
-
+While the previous results were obtained at the virtual precision of 53~bits for double-precision values
+and 24~bits for single-precision values, we also evaluated WT variability across different virtual precisions for FSL.
+Figure~\ref{fig:across-precisions} shows the root-mean-square error (RMSE) between BT and WT variability maps.
+The virtual precision of t=17 bits minimized the RMSE between BT and WT.
+Figure~\ref{fig:gnp-mni} shows the corresponding BT and WT maps obtained at t=17 bits, showing 
+that BT and WT reach comparable magnitudes in some regions.
 
   %%%%%%%%%% plot different precisions%%%%%%%%
   \begin{figure}[ht]
@@ -469,7 +463,7 @@ show significant WT variability, particularly for some regions in the frontal, p
         \centering
         \includegraphics[width=\columnwidth]{figures/rmse-precisions.png}
         %\caption{Standard deviation of thresholded t-statistics map on template surface}
-      \caption{Voxel-wise RMSE between BT and WT variability maps for different virtual precisions. WT is computed from three samples of FSL tool.}
+      \caption{Voxel-wise RMSE between BT and WT variability maps for different virtual precisions. \tristan{Remove (std) from y label}}
     \label{fig:across-precisions}
     \end{minipage}}
   \end{figure}
@@ -482,19 +476,22 @@ show significant WT variability, particularly for some regions in the frontal, p
         \includegraphics[width=\textwidth]{figures/bg_global_precision.pdf}
         %\caption{Standard deviation of thresholded t-statistics map on template surface}
         \caption{Unthresholded group t-statistics standard deviations computed between tools (\textbf{A}) and within tools (\textbf{B}), and difference between them (\textbf{C}).
-        WT is computed from three samples of FSL tool at the virtual precision of t=17 bits.}
+        WT is computed at the virtual precision of t=17 bits. \tristan{remove (AFNI,SPM)}}
     \label{fig:gnp-mni}
     \end{minipage}}
   \end{figure}
 
   \subsection{Group-level thresholded maps}
 
-  Similar conclusions are drawn from the unthresholded t-statistics maps
-  (Figure~\ref{fig:thresh-maps}).
-  Figure~\ref{fig:cm-thresh} compares instability of regional activations,
-  showing that most of the regions have a similar activation pattern in both BT and WT, mostly are stable.
-  However, some regions have a different activation behavior, mainly unstable in BT and stable in WT.
-  % showing more severity of BT instability than WT.
+  Figure~\ref{fig:thresh-maps} compares BT and WT for thresholded group-level maps.
+  While BT is consistently larger than WT, thresholding is an unstable operation 
+  that results in comparable magnitudes for BT and WT within activation clusters where BT variability is low. 
+
+  Figure~\ref{fig:cm-thresh} compares regional activation instability for BT and WT. The average ratio
+  of unstable regions was 26\% for BT and 9.2\% for WT. Moreover, the average F1 score was 0.28. Therefore, regional 
+  WT instability does not appear to be a 
+  good predictor of BT instability.
+  
   
   %%%%%%%%%% Var. of Thresh %%%%%%%%
   \begin{figure*}[ht]
@@ -503,7 +500,7 @@ show significant WT variability, particularly for some regions in the frontal, p
         \includegraphics[width=\textwidth]{figures/std/gl-thresh.png}
       \caption{Thresholded group t-statistics standard deviation maps
       computed across tools (\textbf{A}) and Fuzzy Libmath samples
-      (\textbf{B}) as defined in Eq~\ref{eq:wt-pair}.}
+      (\textbf{B}).}
       \label{fig:thresh-maps}
       \end{minipage}}
     \end{figure*}
@@ -513,67 +510,68 @@ show significant WT variability, particularly for some regions in the frontal, p
       \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
       \centering
       \includegraphics[width=\textwidth]{figures/dice_analysis-plot.png}
-      \caption{Heatmap of confusion matrices for instability of regional activations
-      in BT and WT using the HCP-MMP1.0 parcellation of ~\cite{glasser2016multi}. 
-      A region is unstable (=1) if it has different activation behavior in both tools
-      for BT or different fuzzy samples in each tool for WT; otherwise, it is stable (=0).}
+      \caption{Confusion matrices of activation instability
+      in BT and WT among the 360 regions from the HCP-MMP1.0 parcellation. \tristan{plot a single color map for 3 heatmaps}}
       \label{fig:cm-thresh}
     \end{minipage}}
     \end{figure*}
 
 \section{Discussion}
 
-We represented differences in the results of an fMRI analysis between numerical variability
-and the variability arisen from software package variations.
-Although BT variability was larger than WT variability on average,
-we demonstrated regions in the brain maps that numerical perturbations could simulate BT variability.
-The correlation of these variabilities suggests that numerical perturbations can be used to evaluate the robustness of the analyses
-to inter-software disparities.
+In fMRI \emph{group analyses}, machine error remains an order of magnitude
+smaller than between-tool variability. Group analyses have a regularization
+effect toward numerical noise, which is expected to amplify as sample size
+increases. Therefore, for fMRI studies with large sample sizes, machine
+error can safely be neglected with respect to between-tool variability. The
+recommendation made in~\cite{botvinik2020variability} to rely on ``multiverse" analyses where
+multiple analysis tools are compared is therefore likely to successfully correct
+for machine error in group studies.
 
-While switching between \fslspm was generated the least BT and WT variabilities consistently, the most level of these variabilities was identified
-between \fslafni and \afnispm. %We also found AFNI as the most sensitive tool to numerical perturbations.
-These results do not indicate which software package is better or worse since there is no ground-truth model for the analyses.
-However, this study revealed the importance of numerical instability in the selected tools for doing fMRI analyses.
-It provided a view of related numerical variability of which should be taken into consideration by the software developers.
+However, machine error remains important in group analyses that are based
+on a single tool, as is commonly the case in current fMRI studies. In
+particular, in our study, the inherent instability of thresholding was
+triggered by machine error in 9\% of 360 brain regions, which indicates
+that machine error might have impacted neuroscientific conclusions related
+to these regions. 
 
-We found that numerical instability in individual analyses was attenuated in group analyses
-since we obtained substantially higher variability in t-statistics at the level of subjects.
-This is consistent with the findings in~\cite{bowring2021isolating} in which identified the first-level signal model as the largest
-source of variability across the three tools for this study.
-This is an issue for the development of fMRI biomarkers.
-As a solution, we can aggregate the results obtained from numerical perturbations to improve biomarkers,
-as suggested in~\cite{kiar2020numerical} where data augmentation using numerical perturbations resulted in a better classification in connectomics.
+In \emph{subject analyses}, machine error and between-tool variabilty can
+become comparable for some subjects in some regions. This observation is particularly
+relevant to the development of fMRI-based biomarkers aiming at
+individualized phenotype predictions. Machine error is expected to play
+a non-negligible role in such analyses, even when predictions combine
+results produced by multiple tools.
 
-It is notable that we obtained more uncertainty on thresholded results than unthresholded maps, %This issue is 
-probably due to different thresholding values used in different tools.
-This is consistent with the observations in~\cite{bowring2021isolating} where identified a high correlation between unthresholded t-statistic maps,
-but substantially low Dice coefficient for activations in the thresholded maps.
-This raises further investigations on thresholding techniques to reduce the associated instabilities.
+The observed regularization effect of group analyses toward numerical noise 
+is consistent with observations made in~\cite{kiar2020numerical} from diffusion MRI where 
+connectome graph statistics were found to be substantially unstable at the subject-level 
+while group distributions remained consistent. 
 
-Given that Fuzzy Libmath only perturbs basic mathematical functions, we expect more numerical variability by perturbing linear algebra,
-in particular for non-scalar types like vectors or matrices. For the future study, this can be evaluated using MCA-instrumented versions
-of BLAS and LAPACK along with other libraries available in the Fuzzy project in Verificarlo's GitHub repository at github.com/verificarlo/fuzzy.
+\tristan{discuss larger numerical noise}
+
+No association was found between
+machine error and between-tool variability at the group or subject level,
+which suggests that they can be investigated separately from each other.
+Even though their effects can be of comparable magnitude, machine error and
+between-tool variability are distinct and most likely involve different
+root causes \tristan{revise this based on correlations}.
+
+In conclusion, our results motivate further numerical stability
+investigations in fMRI analysis pipelines. Pipeline-level analyses could be
+conducted to identify specific components that contribute to numerical
+variability, and if possible correct them accordingly. When instability is
+inherent to the analysis, sampling results distributions through numerical
+perturbations might improve stability, as explored in~\cite{kiar2021data}.
+Finally, pipeline-specific statistical corrections might be envisaged to
+account for numerical variability.
 
 
-\section{Conclusion}
 
-We presented a comparison study between numerical variability introduced by floating-point perturbations and tool variability arised from software package variations.
-For an fMRI analysis, we measured a significant variability in both conditions, which was comparable for some brain regions.
-We showed the Fuzzy Libmath library as a valuable model based on MCA method for simulating the numerical variability.
-Moreover, we can leverage the MCA-instrumented libraries for simulating the numerical uncertainty in different studies.
 
-Further work can be done to evaluate and localize the numerical stabilities within tools by focusing on the particular parts of
-the pipeline that has been identified as the main sources of variations in~\cite{bowring2021isolating}.
-This helps to identify the accurate source of instabilities within pipelines and gradually improve the stability of the pipeline components.
+% No conclusion on which tool is more/less stable. 
 
-%%
-%% The next two lines define the bibliography style to be used, and
-%% the bibliography file.
 \bibliographystyle{plain}
 \bibliography{biblio}
 
 
 \end{document}
 \endinput
-%%
-%% End of file `sample-authordraft.tex'.
