@@ -275,14 +275,11 @@ Fuzzy Libmath samples of a given tool. Moreover, we computed WT for a pair of to
 \end{equation}
 where $WT(.)$ is the within-tool variability for a given tool.
 
-Further, from the thresholded maps, we determined regional Dice
-coefficients between activation clusters in the 360 regions in the Human
+Further, from the thresholded maps, we determined regional instability 
+between activation clusters in the 360 regions in the Human
 Connectome Project Multi-Modal Parcellation atlas version 1.0
-(HCP-MMP1.0)~\cite{glasser2016multi}. For BT, Dice coefficients were
-computed between activation maps produced by any pair of tools. For WT,
-Dice coefficients were computed pair-wise among the three Fuzzy samples of
-a given tool and averaged. All Dice coefficients were normalized by the
-region size \tristan{explain how you did this: x = (dice x region size) ; x = (x-xmin)/(xmax-xmin)}. 
+(HCP-MMP1.0)~\cite{glasser2016multi}. For BT, a region was unstable if it had different activation behavior between pair of tools.
+For WT, we considered a region unstable if it had a blinking activation between Fuzzy samples of a given tool.
 
 \section{Results}
 All scripts and data to reproduce the results are
@@ -300,8 +297,7 @@ overall, however, differences were more noticeable visually.
 Overall, our results correctly reproduced
 the ones presented in~\cite{bowring2019exploring}. The observed
 differences were small and might be due to the use of Octave vs MATLAB in
-SPM, different operating systems \tristan{had you checked that?}, or
-different hardware. We performed visual quality control of the AFNI and SPM results
+SPM or different hardware. We performed visual quality control of the AFNI and SPM results
 for each individual subject.
 \tristan{add a figure to show the differences for SPM (Octave) and AFNI}
 
@@ -309,14 +305,22 @@ for each individual subject.
 
 Summary statistics for the group-level unthresholded and thresholded
 t-statistics are reported in Table~\ref{table:pipeline-stats}.
-\tristan{From here this paragraph needs a full re-write} Overall, BT
-variability was larger than WT variability for both means and standard
-deviations \tristan{I don't think it's the case for stdev}. This was
-confirmed by computing the T-test and Wilcoxon signed-rank statistics
-between $BT(A, B)$, and $WT(A)$ and $WT(B)$ for $A$ and $B$ in $[FSL, SPM,
-AFNI]$. We obtained statistically significant values between BT and WT
-variability with t-value $> 70$ and p-value $< 0.05$ in both thresholded
-and unthresholded maps.
+Overall, BT variability was larger than WT variability in both thresholded and unthresholded maps.
+This was confirmed by computing the T-test and Wilcoxon signed-rank statistics between BT and WT as:
+
+\begin{equation*}
+  \left\{
+    \begin{aligned}
+      & BT(a, b), WT(a),\\
+      & BT(a, b), WT(b)
+    \end{aligned}  
+    \quad  a,b \in [FSL, SPM, AFNI] \;
+  \right\}
+  \label{eq:t-tests}
+\end{equation*}
+
+We obtained statistically significant values between BT and WT
+variability with t-value $> 70$ and p-value $< 0.05$.
 
 %%%%%%%%%% Summary of statstics %%%%%%%%
 \setlength{\tabcolsep}{5pt}
@@ -339,10 +343,8 @@ and unthresholded maps.
         {}   & AFNI                          &  0.434       & 0.524      & 0.128     & 0.135  \\
         \bottomrule
     \end{tabular}
-    \caption{Summary of voxel-wise mean and standard deviation in
-    group-level t-statistics in BT and WT \tristan{The caption doesn't
-    reflect what I thought this table represented, this needs
-    discussion. Also in Table III.}.}
+    \caption{Summary statistics of voxel-wise standard deviations
+    in group-level t-statistics in BT and WT.}
     \label{table:pipeline-stats}
 \end{table}
 
@@ -428,8 +430,9 @@ BT and WT variability appear correlated in some regions
         {(WT)}   & SPM                       &  0.048       & 0.037     \\
         {}   & AFNI                          &  0.108       & 0.131     \\
         \bottomrule
-    \end{tabular}
-    \caption{Summary of voxel-wise mean and standard deviation in subject-level t-statistics in BT and WT. Values were averaged across 16 subjects.}
+    \end{tabular} 
+    \caption{Summary statistics of voxel-wise standard deviations in subject-level t-statistics in BT and WT.
+    The voxel-wise standard deviations were averaged across 16 subjects.}
     \label{table:unthresh-maps-subjects}
 \end{table}
 
@@ -487,9 +490,11 @@ show significant WT variability, particularly for some regions in the frontal, p
   \subsection{Group-level thresholded maps}
 
   Similar conclusions are drawn from the unthresholded t-statistics maps
-  (Figure~\ref{fig:thresh-maps}).  Figure~\ref{fig:dice-thresh} compares regional normalized Dice coefficients of
-  activated voxels, showing a linear correlation between BT and WT with
-  p-value $< 0.05$ in all three pairs.
+  (Figure~\ref{fig:thresh-maps}).
+  Figure~\ref{fig:cm-thresh} compares instability of regional activations,
+  showing that most of the regions have a similar activation pattern in both BT and WT, mostly are stable.
+  However, some regions have a different activation behavior, mainly unstable in BT and stable in WT.
+  % showing more severity of BT instability than WT.
   
   %%%%%%%%%% Var. of Thresh %%%%%%%%
   \begin{figure*}[ht]
@@ -498,19 +503,22 @@ show significant WT variability, particularly for some regions in the frontal, p
         \includegraphics[width=\textwidth]{figures/std/gl-thresh.png}
       \caption{Thresholded group t-statistics standard deviation maps
       computed across tools (\textbf{A}) and Fuzzy Libmath samples
-      (\textbf{B}) as defined in Eq~\ref{eq:wt-pair}. \tristan{Change the column headers to (FSL, SPM) instead of FSL - SPM (everywhere).}}
+      (\textbf{B}) as defined in Eq~\ref{eq:wt-pair}.}
       \label{fig:thresh-maps}
       \end{minipage}}
     \end{figure*}
   
     % %%%%%%%%%% Dice plot of thresholded tstats%%%%%%%%
     \begin{figure*}[ht]
+      \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
       \centering
-      \includegraphics[width=\textwidth]{figures/dices_corr.png}
-      \caption{Normalized regional Dice coefficients of activated voxels for
-      BT and WT using the HCP-MMP1.0 parcellation of
-      ~\cite{glasser2016multi}.}
-      \label{fig:dice-thresh}
+      \includegraphics[width=\textwidth]{figures/dice_analysis-plot.png}
+      \caption{Heatmap of confusion matrices for instability of regional activations
+      in BT and WT using the HCP-MMP1.0 parcellation of ~\cite{glasser2016multi}. 
+      A region is unstable (=1) if it has different activation behavior in both tools
+      for BT or different fuzzy samples in each tool for WT; otherwise, it is stable (=0).}
+      \label{fig:cm-thresh}
+    \end{minipage}}
     \end{figure*}
 
 \section{Discussion}
