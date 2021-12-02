@@ -448,6 +448,20 @@ correlation remains unknown.
   \end{minipage}}
 \end{figure*}
 
+\begin{figure*}[ht]
+  \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
+    \begin{subfigure}[ht]{\textwidth}
+      \centering
+      \includegraphics[width=.6\textwidth]{figures/sbj-std-corr-unthresh-plot.png}
+      %\caption{Standard deviation of thresholded t-statistics map on template surface}
+    \end{subfigure}
+    \caption{
+      Voxel-wise comparison of BT and WT variabilty subject by subject.}
+  \label{fig:unthresh-correlation-allsbj}
+  \end{minipage}}
+\end{figure*}
+
+
 \subsection{Group-level untresholded maps at different virtual precisions}
 
 While the previous results were obtained at the virtual precision of 53~bits for double-precision values
@@ -463,7 +477,7 @@ that BT and WT reach comparable magnitudes in some regions.
         \centering
         \includegraphics[width=\columnwidth]{figures/rmse-precisions.png}
         %\caption{Standard deviation of thresholded t-statistics map on template surface}
-      \caption{Voxel-wise RMSE between BT and WT variability maps for different virtual precisions. \tristan{Remove (std) from y label}}
+      \caption{Voxel-wise RMSE between BT and WT variability maps for different virtual precisions.}
     \label{fig:across-precisions}
     \end{minipage}}
   \end{figure}
@@ -473,13 +487,27 @@ that BT and WT reach comparable magnitudes in some regions.
   \begin{figure}[ht]
     \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
         \centering
-        \includegraphics[width=\textwidth]{figures/bg_global_precision.pdf}
+        \includegraphics[width=.75\textwidth]{figures/bg_global_precision.pdf}
         %\caption{Standard deviation of thresholded t-statistics map on template surface}
         \caption{Unthresholded group t-statistics standard deviations computed between tools (\textbf{A}) and within tools (\textbf{B}), and difference between them (\textbf{C}).
-        WT is computed at the virtual precision of t=17 bits. \tristan{remove (AFNI,SPM)}}
+        WT is computed at the virtual precision of t=17 bits.}
     \label{fig:gnp-mni}
     \end{minipage}}
   \end{figure}
+
+  \begin{figure*}[ht]
+    \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
+      \begin{subfigure}[ht]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/std-corr-unthresh-vp17-plot.png}
+        %\caption{Standard deviation of thresholded t-statistics map on template surface}
+      \end{subfigure}
+      \caption{
+        Voxel-wise comparison of BT and WT variabilty. WT is computed with FSL at the virtual precision of t=17 bits.}
+    \label{fig:unthresh-correlation-gvp}
+    \end{minipage}}
+  \end{figure*}
+
 
   \subsection{Group-level thresholded maps}
 
@@ -511,7 +539,7 @@ that BT and WT reach comparable magnitudes in some regions.
       \centering
       \includegraphics[width=\textwidth]{figures/dice_analysis-plot.png}
       \caption{Confusion matrices of activation instability
-      in BT and WT among the 360 regions from the HCP-MMP1.0 parcellation. \tristan{plot a single color map for 3 heatmaps}}
+      in BT and WT among the 360 regions from the HCP-MMP1.0 parcellation.}
       \label{fig:cm-thresh}
     \end{minipage}}
     \end{figure*}
