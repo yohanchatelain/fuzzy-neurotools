@@ -330,7 +330,7 @@ Summary statistics for the group-level unthresholded and thresholded
 t-statistics are reported in Table~\ref{table:pipeline-stats}. For each
 tool pair (A, B), BT variability was significantly larger than machine
 error in tool A or B, in both thresholded and unthresholded maps (Wilcoxon
-signed-rank test p=0 for all tests, t-test p~\textless~$10^{-163}$ for all
+signed-rank test p~\textless~$10^{-162}$ for all tests, t-test p=0 for all
 tests). 
 
 
@@ -389,11 +389,20 @@ any spatial consistency.
 %%%%%%%%%% Var. of Unthresh %%%%%%%%
 \begin{figure*}[ht]
     \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
+      \begin{subfigure}[ht]{\textwidth}
       \centering
       \includegraphics[width=\textwidth]{figures/std/gl-unthresh.png}
       %\caption{Standard deviation of thresholded t-statistics map on template surface}
+      \end{subfigure}
+      \hfill
+      \begin{subfigure}[ht]{\textwidth}
+        \centering
+        \includegraphics[width=.9\textwidth]{figures/std-corr-unthresh-plot.png}
+        %\caption{Standard deviation of thresholded t-statistics map on template surface}
+      \end{subfigure}
+
     \caption{Unthresholded group-level variability computed between tools (\textbf{A}) and within tools (\textbf{B}),
-    and difference between them (\textbf{C}). \tristan{Add XY plots for each map}}
+    and difference between them (\textbf{C}).}
     \label{fig:unthresh-maps}
     \end{minipage}}
   \end{figure*}
@@ -402,8 +411,9 @@ any spatial consistency.
 
   Summary statistics for subject-level unthresholded t-statistics maps are
   reported in Table~\ref{table:unthresh-maps-subjects}. As for group-level
-  maps, BT variability was consistently larger than WT variability
-  \tristan{report statistical tests}.
+  maps, BT variability was consistently larger than WT variability (Wilcoxon
+  signed-rank test p~\textless~$10^{-160}$ for all tests, t-test p=0 for all
+  tests). 
 
   Figure~\ref{fig:unthresh-maps-sbj} shows BT and WT variability for
   the subject with the highest WT variability among the 16 subjects. For
@@ -414,7 +424,6 @@ any spatial consistency.
   correlated for all subjects (Figure~\ref{fig:unthresh-correlation-allsbj}, 
   R in [0.442, 0.612], p=0.0 for all
   subjects).
-  \tristan{Add the subject XY plots as supplementary material}
 
   %%%%%%%%%% Summary of statstics %%%%%%%%
 \setlength{\tabcolsep}{5pt}
@@ -478,27 +487,23 @@ that BT and WT reach comparable magnitudes in some regions.
 
   
   %%%%%%%%%% plot different precisions%%%%%%%%
-  \begin{figure}[ht]
-    \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
-        \centering
-        \includegraphics[width=.75\textwidth]{figures/bg_global_precision.pdf}
-        %\caption{Standard deviation of thresholded t-statistics map on template surface}
-        \caption{Unthresholded group t-statistics standard deviations computed between tools (\textbf{A}) and within tools (\textbf{B}), and difference between them (\textbf{C}).
-        WT is computed at the virtual precision of t=17 bits.\tristan{merge with figure with brain maps}}
-    \label{fig:gnp-mni}
-    \end{minipage}}
-  \end{figure}
-
   \begin{figure*}[ht]
     \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
       \begin{subfigure}[ht]{\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{figures/std-corr-unthresh-vp17-plot.png}
+        \includegraphics[width=.75\textwidth]{figures/bg_global_precision.pdf}
         %\caption{Standard deviation of thresholded t-statistics map on template surface}
-      \end{subfigure}
-      \caption{
-        Voxel-wise comparison of BT and WT variabilty. WT is computed with FSL at the virtual precision of t=17 bits.}
-    \label{fig:unthresh-correlation-gvp}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[ht]{\textwidth}
+          \centering
+          \includegraphics[width=.8\textwidth]{figures/std-corr-unthresh-vp17-plot.png}
+          %\caption{Standard deviation of thresholded t-statistics map on template surface}
+        \end{subfigure}
+        %\caption{Standard deviation of thresholded t-statistics map on template surface}
+        \caption{Unthresholded group t-statistics standard deviations computed between tools (\textbf{A}) and within tools (\textbf{B}), and difference between them (\textbf{C}).
+        WT is computed at the virtual precision of t=17 bits.}
+    \label{fig:gnp-mni}
     \end{minipage}}
   \end{figure*}
 
@@ -517,25 +522,26 @@ that BT and WT reach comparable magnitudes in some regions.
   %%%%%%%%%% Var. of Thresh %%%%%%%%
   \begin{figure*}[ht]
       \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
+        \begin{subfigure}[ht]{\textwidth}
+          \centering
+          \includegraphics[width=\textwidth]{figures/std/gl-thresh.png}
+          %\caption{Standard deviation of thresholded t-statistics map on template surface}
+          \end{subfigure}
+          \hfill
+          \begin{subfigure}[ht]{\textwidth}
+            \centering
+            \includegraphics[width=.9\textwidth]{figures/dice_analysis-plot.png}
+            %\caption{Standard deviation of thresholded t-statistics map on template surface}
+          \end{subfigure}
         \centering
-        \includegraphics[width=\textwidth]{figures/std/gl-thresh.png}
       \caption{Thresholded group t-statistics standard deviation maps
       computed across tools (\textbf{A}) and Fuzzy Libmath samples
-      (\textbf{B}).}
+      (\textbf{B}). The confusion matrices of activation instability
+      in BT and WT among the 360 regions from the HCP-MMP1.0 parcellation is represented in the bottom row.}
       \label{fig:thresh-maps}
       \end{minipage}}
     \end{figure*}
   
-    % %%%%%%%%%% Dice plot of thresholded tstats%%%%%%%%
-    \begin{figure*}[ht]
-      \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
-      \centering
-      \includegraphics[width=\textwidth]{figures/dice_analysis-plot.png}
-      \caption{Confusion matrices of activation instability
-      in BT and WT among the 360 regions from the HCP-MMP1.0 parcellation.}
-      \label{fig:cm-thresh}
-    \end{minipage}}
-    \end{figure*}
 
 \section{Discussion}
 
@@ -587,7 +593,15 @@ account for numerical variability.
 
 \appendix
 
-\tristan{Add SPM and AFNI replication figure here.}
+\begin{figure*}[ht]
+  \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
+  \centering
+  \includegraphics[width=\textwidth]{figures/replication-diffs.png}
+  \caption{Differences between replicated and original results obtained in~\cite{bowring2019exploring} 
+  of unthresholded group-level t-statistics for SPM (left) and AFNI (right).}
+  \label{fig:replication-diff}
+\end{minipage}}
+\end{figure*}
 
 \begin{figure*}[ht]
   \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
@@ -596,8 +610,7 @@ account for numerical variability.
       \includegraphics[width=.6\textwidth]{figures/sbj-std-corr-unthresh-plot.png}
       %\caption{Standard deviation of thresholded t-statistics map on template surface}
     \end{subfigure}
-    \caption{
-      Voxel-wise comparison of BT and WT variabilty subject by subject. \tristan{update figure}}
+    \caption{Voxel-wise comparison of BT and WT variabilty for 16 subjects.}
   \label{fig:unthresh-correlation-allsbj}
   \end{minipage}}
 \end{figure*}
