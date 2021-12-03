@@ -48,8 +48,9 @@
 
 \title{Software variability in fMRI analysis:\\ comparing between-tool and numerical errors}
 
-\author{Ali Salari$^1$, Other Authors$^1$, Tristan Glatard$^1$ \\
-$^1$ Department of Computer-Science and Software Engineering, Concordia University, Montreal, Canada}
+\author{Ali Salari$^1$, Yohan Chatelain$^1$, [other co-authors], Gregory Kiar$^2$, Tristan Glatard$^1$ \\
+$^1$ Department of Computer-Science and Software Engineering, Concordia University, Montreal, Canada\\
+$^2$Center for the Developing Brain, Child Mind Institute, New York, NY, USA}
 
 \maketitle
 \begin{abstract}
@@ -241,7 +242,9 @@ addition between the original function output and a floating-point zero.
 }
 \lstinputlisting[caption=Sample wrapper function (C code), label=algo:wrapper, style=customasm]{wrapper.c}
 
-To validate our instrumentations, we first verified that non-instrumented
+In~\cite{salari2021accurate}, Fuzzy Libmath was shown to accurately
+simulate the effect of Linux operating system updates in structural
+pre-processing pipelines. To validate our pipeline instrumentations for the present study, we first verified that non-instrumented
 executions of the same pipeline on the same dataset led to identical
 results \tristan{did you fix random seeds and if so in which pipelines?}. We also listed the pipeline
 library dependencies using the \texttt{ldd} Linux utility and verified that
@@ -269,12 +272,12 @@ Canada's} Béluga cluster nodes, each with 2$\times$ Intel Gold 6148 Skylake
 above-mentioned software packages in Docker container images available at
 \url{https://github.com/big-data-lab-team/fuzzy-neurotools}.
 
-We measured within-tool (WT) variability by running the same analyses three
+We measured numerical (within-tool -- WT) variability by running the same analyses three
 times using Fuzzy Libmath with a virtual precision of $t=53$~bits for
 double-precision values and $t=24$~bits for single-precision values. These
 values were chosen such that the numerical perturbation simulates machine
-error, the minimal distance between two consecutive floating-point numbers. The resulting samples are equally plausible estimates of
-the true numerical result. Moreover, to evaluate numerical perturbations at different magnitudes, 
+error. The resulting samples are equally plausible estimates of
+the true numerical result at the precision used by the pipelines. Moreover, to evaluate numerical perturbations at different magnitudes, 
 we repeated the FSL analyses for virtual
 precisions ranging from $t=1$~bit to $t=24$~bits for single-precision
 and double-precision values. We also repeated the FSL analyses for virtual 
@@ -285,13 +288,14 @@ We evaluated WT and BT variability for thresholded as well as unthresholded
 group-level and subject-level t-statistics maps, by computing the
 standard deviation of t-statistic maps across pipelines (BT) or Fuzzy Libmath samples (WT). For BT, we computed the standard deviation 
 across a given pair of tools.
-For WT, we computed the standard deviation across the 3 
+For WT, we computed the standard deviation across the three
 Fuzzy Libmath samples of a given tool. Moreover, we computed WT variability for a pair of tools (A, B) as follows:
 \begin{equation}
   \sigma_{WT(A,B)}^2 = \sigma_{WT(A)}^2 + \sigma_{WT(B)}^2,
   \label{eq:wt-pair}
 \end{equation}
-where $\sigma_{WT(.)}$ is the within-tool variability for a given tool.
+where $\sigma_{WT(.)}$ is the numerical variability for a given tool
+and $\sigma_{WT(., .)}$ is the numerical variability for a pair of tools.
 
 Further, from the thresholded maps, we determined regional instability
 between activation clusters in the 360 regions in the Human Connectome
