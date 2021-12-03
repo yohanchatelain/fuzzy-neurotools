@@ -46,7 +46,7 @@
 \newcommand{\discuss}[1]{\uwave{#1}}
 
 
-\title{Comparing tool variability and numerical variability in fMRI analyses}
+\title{Software variability in fMRI analysis:\\ comparing between-tool and numerical errors}
 
 \author{Ali Salari$^1$, Other Authors$^1$, Tristan Glatard$^1$ \\
 $^1$ Department of Computer-Science and Software Engineering, Concordia University, Montreal, Canada}
@@ -68,7 +68,7 @@ numerical variability through Monte-Carlo arithmetic.
 Although We found that between-tool variability was larger than numerical variability,
 we identified brain regions that numerical perturbations simulated between-tool variability.
 Furthermore, we found more numerical instability in thresholded maps than unthresholded ones
-and individual analysis than group-level analysis results.
+and individual analysis than group-level analysis results. \tristan{Abstract to be fixed}
 
 \end{abstract}
 
@@ -79,43 +79,59 @@ and individual analysis than group-level analysis results.
 
 \section{Introduction}
 
-% Data analysis workflows in many scientific domains have become increasingly complex and flexible.
-Recent studies highlighted the instability of the neuroimaging pipelines depending on the computing platform,
-software package, and even tool versions. Changes in the computational
-environment such as compilers, libraries, operating systems may introduce small numerical errors and create
-significantly different results in unstable pipelines~\cite{Glatard2015,Gronenschild2012,salari2020spot}.
-Moreover, the impact of methodological changes on fMRI analyses has been investigated extensively~\cite{bowring2019exploring,botvinik2020variability,bhagwat2021understanding,carp2012plurality}.
-For instance, in related works, it has been shown that running the same fMRI experiments by different teams can substantially affect
-scientific conclusions~\cite{botvinik2020variability,carp2012plurality};
-replication of fMRI experiments using the three most well-known software packages can influence the final determining areas of
-brain activations~\cite{bowring2019exploring}; %bowring2021isolating.
-also, the choice of preprocessing pipelines on neuroimaging cortical surface analyses is compound with instabilities~\cite{bhagwat2021understanding}.
-% In the presence of such instabilities, it is often hard to trust the data processing results. % validity of the computational results.
+Software variability has been highlighted as an important source of error
+in fMRI analysis, originating from mainly two factors: Between-tool
+variability denotes differences observed in results produced by different
+software toolboxes --- such as FSL, AFNI and SPM --- when analyzing the same dataset
+using similar methods. Numerical variability, in contrast, denotes
+differences observed in results produced by the same analytical toolbox
+executed in different environments – such as different operating systems or
+different hardware platforms. This manuscript investigates the extent to
+which both types of variability relate to each other.
 
-In such a heterogeneous environment, numerical instability is an essential issue for reproducibility.
-Numerical instability is a characteristic of pipelines that results from the influence of the floating-point arithmetics
-and iterative convergence of numerical errors~\cite{freitas2002issue}.
-Stochastic arithmetic approaches such as Monte-Carlo arithmetic (MCA)~\cite{Parker1997-qq} have been used to study the impact of numerical errors
-originating in floating-point computations in mathematical libraries.
-In~\cite{salari2021accurate}, we quantified the numerical stability of the HCP preprocessing pipeline~\cite{glasser2013} based on the MCA method
-by creating a Fuzzy environment, so that instrument mathematical functions are implemented in mathematical system libraries.
-As a result of numerical perturbations, we discovered a very low numerical precision in the result images comparable to the operating system variability.
-In a related study~\cite{kiar2020numerical}, the instability of results was explored by instrumenting a connectome estimation pipeline with the MCA technique.
-These works demonstrate the necessity of numerical uncertainty quantification for understanding related issues that hamper the computational reproducibility of analyses.
+Numerical variability stems from errors introduced in floating point
+computations by numerical rounding, cancellation and absorption~\cite{muller2018handbook}. In
+practice, the occurrence of such errors is affected by variations in
+hardware, software dependencies, compilation, parallelization, and most
+likely other factors. In general, the magnitude of such errors and their
+variations is in the range of 1 unit in the last place (ulp) --- also known
+as machine error, the difference between two successive floating-point
+numbers. However, when computations depend on imprecise libraries,
+numerical error may vary by several ulps. For instance, the numerical error
+of the complementary error function (erfc) is larger than 3 ulps in several
+mathematical libraries~\cite{zimmermann:hal-03141101}, implying that an update of this function could introduce
+numerical perturbations larger than 3 ulps. Due to numerical instability,
+machine error may amplify during its propagation through the analysis,
+resulting in considerable loss of precision in final results. In fMRI,
+numerical variability produced by Linux updates was shown to result in Dice
+coefficients ranging from 0.0 to 1.0 for ICA components produced by FSL
+MELODIC~\cite{Glatard2015}.
 
-\tristan{We investigate two questions: (1) how do numerical and between-tool variability compare? (2) are they correlated?}
+Between-tool variability is not a surprising concept for software
+developers: different programs executed on identical data may obviously
+produce different results. However, in fMRI, analysis programs all aim to
+estimate brain activity from measured variations in the BOLD signal, which
+is not expected to be measurably impacted by computational artifacts.
+Therefore, the observation reported in~\cite{bowring2019exploring} that the three
+main fMRI analysis toolboxes may result in marked
+analytical differences, such as Dice coefficients ranging from 0.000 to
+0.684 in comparisons of thresholded group-level statistic maps, has raised
+substantial concern. In a follow-up study~\cite{bowring2021isolating}, the same
+authors isolate the analytical components where the pipelines diverge,
+highlighting a major impact of the signal model and suggesting that the
+root-cause for between-tool variability depends on the analysis design and
+task paradigm.  \tristan{[refer to Xinhui's pre-print].}
 
-In this work, we reproduce an fMRI analysis in~\cite{bowring2019exploring} with different neuroimaging software packages in the presence of the Fuzzy environment,
-and then quantify the variability across tools and the numerical variability in results.
-We call the cross-software variation and numerical variation, between tool (BT) and within tool (WT) variability, respectively.
-In fact, the WT variability shows results across software packages in the Fuzzy environment.
-The primary objective of this study is to answer these two questions: 1) how the fMRI analyses across tools are numerically stable?
-2) how the numerical variability is in comparison with the tool variability?
-This comparative study reveals the importance of numerical variability and motivates research studies to evaluate the numerical uncertainty of the pipelines.
-
-% We start to reproduce an analysis from Bowring, this can be as a practice for reproducibility manner in the community.
-% In particular, we investigate the effect of 1) between software 2) within software (numerical)
-% We present a comparative assessment of group-level analysis of an fMRI pipeline.
+We investigate the relationship between numerical and between-tool
+variability through two main questions: (1) how do both types of
+variability compare in magnitude, and (2) is there an association between
+them. The first question determines the extent to which each variability
+source may impact current fMRI results, and which one should be addressed
+in priority. The second question may provide deeper insights on the origins
+of software variability. Conceptually, both types of variability may
+reflect a single solution space shaped by local minima and
+ill-conditioning, which could be explored through numerical or software
+perturbations.
 
 
 \section{Materials and Methods}
