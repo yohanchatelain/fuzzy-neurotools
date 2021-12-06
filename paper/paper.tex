@@ -55,22 +55,22 @@ $^2$Center for the Developing Brain, Child Mind Institute, New York, NY, USA}
 \maketitle
 \begin{abstract}
 
-Numerical and software variability broadly affect structural, diffusion, and functional MRI analyses. Numerical
-variability originates in software updates or code
-parallelization, whereas software variability reflects discrepancies between
-models implemented in different analysis software packages. While numerical
-and software variability were both shown to impact analysis outcomes, the
-extent to which these sources of variability compare for a given
-analysis remains understudied. This work presents a comparison of
-numerical and software variability for group-level and subject-level functional MRI analyses.
-We reproduced a previous comparison between functional MRI analysis
-software packages FSL, AFNI, and SPM, which we extended to measure
-numerical variability through Monte-Carlo arithmetic.
-Although We found that between-tool variability was larger than numerical variability,
-we identified brain regions that numerical perturbations simulated between-tool variability.
-Furthermore, we found more numerical instability in thresholded maps than unthresholded ones
-and individual analysis than group-level analysis results. \tristan{Abstract to be fixed}
-
+Software variability broadly affects functional MRI analyses due to
+differences among analytical tools and numerical instabilities. While
+numerical and between-tool variability were both shown to impact analysis
+outcomes, the extent to which these sources of variability compare for a
+given analysis remains understudied. We extended a previous comparison
+between fMRI analysis tools FSL, AFNI, and SPM, to measure numerical
+variability through Monte-Carlo arithmetic. We found that in group analyses
+between-tool variability was consistently larger than machine error,
+whereas in subject analyses machine error approached between-tool
+variability in some cases. Furthermore, between-tool variability and
+machine error appeared moderately correlated in all tested conditions.
+Finally, we found that numerical error at the precision of 17 bits --- a
+precision level found in commonly-used libraries --- had effects of similar
+magnitude \tristan{check that} than between-tool variability. Our findings motivate the
+continued investigation of numerical instability in neuroimaging, and position it 
+as a possible proxy for between-tool variations.
 \end{abstract}
 
 \section{Introduction}
