@@ -316,22 +316,22 @@ were visually unnoticeable. For AFNI, the activation maps were similar
 overall, however, differences were more noticeable visually. 
 The observed differences remained small (see Appendix ~\ref{sec:supp-repro}) and might be due to the use of
 Octave vs MATLAB in SPM and of multithreading in AFNI. We performed visual quality control of the AFNI
-and SPM results for each individual subject and confirmed that \tristan{Ali: which ones?} images were
-correctly registered to the MNI template.
+and SPM results for each individual subject and confirmed that T1-weighted images were
+correctly skull-stripped and registered to the MNI template.
 
-\subsection{In group analysis, BT variability was larger than and correlated with machine error}
+\subsection{In the group analysis, BT variability was larger than and correlated with machine error}
 
 Table~\ref{table:pipeline-stats} reports on summary statistics for the
 group-level t-statistics. For each tool pair (A, B), BT variability was
 significantly larger than machine error in tool A or B, in both thresholded
 and unthresholded maps (Wilcoxon signed-rank test p~\textless~$10^{-162}$
 for all tests, t-test p=0 for all tests). These global differences were
-confirmed regionally (Figure~\ref{fig:unthresh-maps}-\textbf{A},\textbf{B},\textbf{C}). 
-In addition, BT and WT variability appeared moderately correlated (R
+confirmed across the maps (Figure~\ref{fig:unthresh-maps}-\textbf{A},\textbf{B},\textbf{C}). 
+In addition, BT and WT variability appeared moderately correlated (Pearson's R
 in [0.56, 0.58], p=0.0, Figure~\ref{fig:unthresh-maps}-\textbf{D}). Interestingly, the correlation 
 was driven by a set of voxels exhibiting comparable BT and
 WT values (located around the identity line in the XY plot), which, however, did not seem to have 
-any spatial consistency.
+any spatial consistency \tristan{Ali, check for intensity differences between these voxels and the other ones}.
 
 
 \setlength{\tabcolsep}{5pt}
@@ -377,13 +377,15 @@ any spatial consistency.
 
   \subsection{In subject analyses, machine error approached BT variability in some regions}
 
-  Table~\ref{table:pipeline-stats} also reports on summary statistics for subject-level unthresholded t-statistics maps. As for group-level
-  maps, BT variability was consistently larger than WT variability (Wilcoxon
-  signed-rank test p~\textless~$10^{-160}$ for all tests, t-test p=0 for all
-  tests). However, for some subjects, machine error (WT variability) approached and even 
-  surpassed BT in some regions (Figure~\ref{fig:unthresh-maps-sbj}).  As for the group maps, BT and WT variability appeared moderately
-  correlated for all subjects (R in [0.442, 0.612], p=0.0 for all
-  subjects, Appendix~\ref{sec:supp-subjects}).  
+  Table~\ref{table:pipeline-stats} also reports on summary statistics for
+  subject-level unthresholded t-statistics maps. As for group-level maps,
+  BT variability was consistently larger than WT variability (Wilcoxon
+  signed-rank test p~\textless~$10^{-160}$ for all tests, t-test p=0 for
+  all tests). However, Figure~\ref{fig:unthresh-maps-sbj} shows that for
+  some subjects, machine error (WT variability) approached and even
+  surpassed BT in some regions. As for the group maps, BT and WT
+  variability appeared moderately correlated for all subjects (R in [0.442,
+  0.612], p=0.0 for all subjects, see Appendix~\ref{sec:supp-subjects}).
 
   %%%%%%%%%% Var. of Unthresh sbj05%%%%%%%%
 \begin{figure*}[ht]
@@ -396,7 +398,7 @@ any spatial consistency.
   \label{fig:unthresh-maps-sbj}
 \end{figure*}
 
-\subsection{At the precision t=17~bits, numerical variability approached BT variability in group analysis}
+\subsection{At precision t=17~bits, WT variability approached BT variability in the group analysis}
 
 While the previous results were obtained for machine error, we also
 evaluated numerical variability across different virtual precisions for FSL
@@ -404,7 +406,7 @@ and found that the virtual precision of t=17 bits minimized the RMSE
 between BT and WT in unthresholded group maps. Figure~\ref{fig:gnp-mni} shows BT
 and WT in the corresponding group maps obtained at t=17 bits, showing that
 BT and WT reach comparable magnitudes in some regions. BT and WT remained
-moderately correlated at this precision. \tristan{In the text, add statistics similar to Table 2.}
+moderately correlated at this precision. \tristan{In the text, add statistics similar to Table 2: is BT still larger than WT here?}
   
   %%%%%%%%%% plot different precisions%%%%%%%%
   \begin{figure*}[ht]
@@ -421,20 +423,20 @@ moderately correlated at this precision. \tristan{In the text, add statistics si
   \end{figure*}
 
 
-  \subsection{Previous results are confirmed in thresholded group maps}
+  \subsection{Previous results were confirmed in thresholded group maps}
 
   Figure~\ref{fig:thresh-maps}-\textbf{A},\textbf{B},\textbf{C} compares BT
   and WT for thresholded group maps. Thresholding is an unstable operation
-  that introduced high variability for both BT and WT at the edges of
+  that introduced variability for both BT and WT at the edges of
   active regions. Except in these regions, BT remained consistently larger
-  than WT. To measure a potential association between BT and WT, we
+  than WT. To measure correlation between BT and WT, we
   measured WT instability and BT instability in each region of the
   HCP-MMP1.0 parcellation. The confusion matrices in
   Figure~\ref{fig:thresh-maps}-\textbf{D} report on such instabilities for
   the 360 tested regions. The average ratio of unstable regions was 26\%
   for BT and 9.2\% for WT, which confirmed that BT variability was larger than machine error.
-  The average Cohen's kappa score between WT instability and BT instability was $\kappa=0.17$, indicating 
-  a moderate agreement between WT instability and BT instability (-1 \textless $\kappa$ \textless 1, $\kappa$\leq 0 denotes chance agreement).
+  The average Cohen's kappa score\footnote{$\kappa \leq 0$ denotes chance agreement, -1 \textless $\kappa$ \textless 1} between WT instability and BT instability was $\kappa=0.17$, indicating 
+  a moderate agreement between WT instability and BT instability.
 
   %%%%%%%%%% Var. of Thresh %%%%%%%%
   \begin{figure*}[ht]
@@ -454,42 +456,70 @@ moderately correlated at this precision. \tristan{In the text, add statistics si
 
 \section{Discussion}
 
-In fMRI group analyses, machine error remains an order of magnitude
-smaller than between-tool variability. Group analyses have a regularization
-effect toward numerical noise, which is expected to amplify as sample size
+In fMRI group analyses, machine error remains an order of magnitude smaller
+than between-tool variability. Group analyses have a regularization effect
+toward numerical noise, which is expected to amplify as sample size
 increases. Therefore, for fMRI studies with large sample sizes, machine
 error can safely be neglected with respect to between-tool variability. The
-recommendation made in~\cite{botvinik2020variability} to rely on ``multiverse" analyses where
-multiple analysis tools are compared is therefore likely to successfully correct
-for machine error in group studies.
+recommendation made in~\cite{botvinik2020variability} to rely on
+``multiverse" analyses where multiple analysis tools are compared is
+therefore likely to successfully correct for machine error in group
+studies. Nevertheless, machine error remains substantial in group analyses
+that are based on a single tool, as is commonly the case in current fMRI
+studies. In particular, in our study, the inherent instability of
+thresholding was triggered by machine error in 9\% of 360 brain regions,
+which indicates that machine error might have impacted neuroscientific
+conclusions related to these regions. 
 
-However, machine error remains important in group analyses that are based
-on a single tool, as is commonly the case in current fMRI studies. In
-particular, in our study, the inherent instability of thresholding was
-triggered by machine error in 9\% of 360 brain regions, which indicates
-that machine error might have impacted neuroscientific conclusions related
-to these regions. 
-
-In subject analyses, machine error and between-tool variabilty can
-become comparable for some subjects in some regions. This observation is particularly
-relevant to the development of fMRI-based biomarkers aiming at
-individualized phenotype predictions. Machine error is expected to play
+In subject analyses, machine error and between-tool variabilty can become
+of comparable magnitude for some subjects in some regions. This observation
+is particularly relevant to the development of fMRI-based biomarkers aiming
+at individualized phenotype predictions. Machine error is expected to play
 a non-negligible role in such analyses, even when predictions combine
-results produced by multiple tools.
-
-The observed regularization effect of group analyses toward numerical noise 
-is consistent with observations made in~\cite{kiar2020numerical} from diffusion MRI where 
-connectome graph statistics were found to be substantially unstable at the subject-level 
+results produced by multiple tools. The observed regularization effect of
+group analyses toward numerical noise is consistent with observations made
+in~\cite{kiar2020numerical} from diffusion MRI where connectome graph
+statistics were found to be substantially unstable at the subject-level
 while group distributions remained consistent. 
 
-\tristan{discuss larger numerical noise}
+For both group and subject analyses, between-tool variability and machine
+error were found to be moderately correlated. Even though between-tool
+variability and numerical variability are different in nature, this result
+suggests that in some cases both sources of variability may have a common
+cause that might be related to the conditioning of the BOLD signal
+estimation problem in a specific dataset. Therefore, in some regions,
+instabilities of similar magnitude may be triggered by small numerical
+perturbations, model variations or implementation differences. For
+instance, the analysis of datasets with high motion may be unstable both 
+across tools and numerically. 
 
-No association was found between
-machine error and between-tool variability at the group or subject level,
-which suggests that they can be investigated separately from each other.
-Even though their effects can be of comparable magnitude, machine error and
-between-tool variability are distinct and most likely involve different
-root causes \tristan{revise this based on correlations}.
+Therefore, numerical stability may be suitable as a proxy to study
+between-tool variability. This speculation might be of practical value to
+address software variability at large given that numerical stability refers
+to a consistent mathematical framework whereas between-tool variability
+remains more empirical. Likewise, numerical and between-tool stability may
+be interesting proxies for analysis accuracy, and perhaps useful in quality
+control.
+
+The finding that numerical variability approached tool variability at the
+virtual precision of t=17~bits is interesting too. Indeed, while machine
+error generally introduces differences in the order of 1 ulp --- or
+t=53~bits for double-precision values and t=24~bits for single-precision
+ones --- common scientific software dependencies introduce larger errors.
+For instance, SciPy's 2D spline interpolation was recently found to be
+precise up to t=10~bits~\cite{pytracer} and might therefore introduce
+numerical perturbations leading to errors in the range of between-tool
+variability \tristan{Yohan, please check that sentence}. Such high errors
+might be triggered by updates in operating systems, Python, MATLAB, and
+other software dependencies.
+
+Our results are limited by the type of numerical noise introduced in the
+analyses. Indeed, we only introduced noise in the outputs of elementary
+mathematical functions while numerical noise could creep in any
+floating-point operation. Our estimation of numerical variability should
+therefore be considered a lower bound. Our estimation of tool varability is
+also likely to be underestimated, having tested only 3 analytical pipelines
+among the thousands available~\cite{carp2012plurality}.
 
 In conclusion, our results motivate further numerical stability
 investigations in fMRI analysis pipelines. Pipeline-level analyses could be
@@ -547,7 +577,7 @@ WT.
 \begin{figure*}[ht]
       \centering
       \includegraphics[width=.6\textwidth]{figures/sbj-std-corr-unthresh-plot.png}
-      \caption{Relationship between BT and WT variabilty for 16 subjects.}
+      \caption{Comparison between BT and WT variabilty for 16 subjects.}
   \label{fig:unthresh-correlation-allsbj}
 \end{figure*}
 
