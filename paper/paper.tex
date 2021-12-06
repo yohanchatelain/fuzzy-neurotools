@@ -1,6 +1,6 @@
- \documentclass[conference]{IEEEtran}
-\IEEEoverridecommandlockouts
-%\usepackage{hyphenat}
+ \documentclass[11pt,onecolumn]{article}
+ \usepackage[margin=0.5in]{geometry}
+
 \usepackage[ruled,vlined]{algorithm2e}
 \usepackage{amsmath}
 \usepackage{xspace}
@@ -72,11 +72,6 @@ Furthermore, we found more numerical instability in thresholded maps than unthre
 and individual analysis than group-level analysis results. \tristan{Abstract to be fixed}
 
 \end{abstract}
-
-\begin{IEEEkeywords}
-  Numerical Instability, Reproducibility, Monte-Carlo arithmetic, Neuroimaging
-\end{IEEEkeywords}
-
 
 \section{Introduction}
 
@@ -308,7 +303,7 @@ samples.
 
 \section{Results}
 All scripts and data to reproduce the results are
-available at \url{https://github.com/big-data-lab-team/fuzzy-neurotools}.
+available in out GitHub repository at \url{https://github.com/big-data-lab-team/fuzzy-neurotools}.
 
 
 \subsection{Sanity check}
@@ -319,176 +314,106 @@ in~\cite{bowring2019exploring}. For FSL, we found
 identical checksums. For SPM, the checksums were different but differences
 were visually unnoticeable. For AFNI, the activation maps were similar
 overall, however, differences were more noticeable visually. 
-The observed differences remained small and might be due to the use of
-Octave vs MATLAB in SPM. We performed visual quality control of the AFNI
-and SPM results for each individual subject and confirmed that images were
+The observed differences remained small (see Appendix ~\ref{sec:supp-repro}) and might be due to the use of
+Octave vs MATLAB in SPM and of multithreading in AFNI. We performed visual quality control of the AFNI
+and SPM results for each individual subject and confirmed that \tristan{Ali: which ones?} images were
 correctly registered to the MNI template.
 
-\subsection{Group-level unthresholded maps}
+\subsection{In group analysis, BT variability was larger than and correlated with machine error}
 
-Summary statistics for the group-level unthresholded and thresholded
-t-statistics are reported in Table~\ref{table:pipeline-stats}. For each
-tool pair (A, B), BT variability was significantly larger than machine
-error in tool A or B, in both thresholded and unthresholded maps (Wilcoxon
-signed-rank test p~\textless~$10^{-162}$ for all tests, t-test p=0 for all
-tests). 
+Table~\ref{table:pipeline-stats} reports on summary statistics for the
+group-level t-statistics. For each tool pair (A, B), BT variability was
+significantly larger than machine error in tool A or B, in both thresholded
+and unthresholded maps (Wilcoxon signed-rank test p~\textless~$10^{-162}$
+for all tests, t-test p=0 for all tests). These global differences were
+confirmed regionally (Figure~\ref{fig:unthresh-maps}-\textbf{A},\textbf{B},\textbf{C}). 
+In addition, BT and WT variability appeared moderately correlated (R
+in [0.56, 0.58], p=0.0, Figure~\ref{fig:unthresh-maps}-\textbf{D}). Interestingly, the correlation 
+was driven by a set of voxels exhibiting comparable BT and
+WT values (located around the identity line in the XY plot), which, however, did not seem to have 
+any spatial consistency.
 
 
-% This was confirmed by computing the T-test and Wilcoxon signed-rank statistics between BT and WT as:
-
-% \begin{equation*}
-%   \left\{
-%     \begin{aligned}
-%       & BT(a, b), WT(a),\\
-%       & BT(a, b), WT(b)
-%     \end{aligned}  
-%     \quad  a,b \in [FSL, SPM, AFNI] \;
-%   \right\}
-%   \label{eq:t-tests}
-% \end{equation*}
-
-% We obtained statistically significant values between BT and WT
-% variability with t-value $> 70$ and p-value $< 0.05$.
-
-%%%%%%%%%% Summary of statstics %%%%%%%%
 \setlength{\tabcolsep}{5pt}
 \begin{table}[h]
     \centering
-    \begin{tabular}{cccc|cc}
+    \begin{tabular}{cccccc|cc}
         \toprule
-        \multirow{2}{*}{}& {} & \multicolumn{2}{c}{Thresholded} & \multicolumn{2}{c}{Unthresholded} \\
-        \cmidrule{3-4} \cmidrule{5-6} \\
-        {} & {} & Mean & Std. dev. & Mean & Std. dev. \\
+        && \multicolumn{4}{c|}{Group analyses} & \multicolumn{2}{c}{Subject analyses}\\
+        \multirow{2}{*}{}& {} & \multicolumn{2}{c}{Thresholded} & \multicolumn{2}{c|}{Unthresholded} & \multicolumn{2}{c}{Unthresholded} \\
+        % \cmidrule{3-8}
+        {} & {} & $\mu$ & $\sigma$ & $\mu$ & $\sigma$ & $\mu$ & $\sigma$ \\
         \midrule
-        \rowcolor{lightgray}
-        {Between Tools} & FSL vs. SPM        &  1.282       & 0.525      & 0.443     & 0.344  \\
-        \rowcolor{lightgray}
-        {(BT)} & FSL vs. AFNI                &  1.548       & 0.616      & 0.547     & 0.441  \\
-        \rowcolor{lightgray}
-        {} & AFNI vs. SPM                    &  1.475       & 0.672      & 0.608     & 0.477  \\
-        {Within Tool} & FSL                  &  0.354       & 0.491      & 0.082     & 0.065  \\
-        {(WT)}   & SPM                       &  0.252       & 0.448      & 0.054     & 0.045  \\
-        {}   & AFNI                          &  0.434       & 0.524      & 0.128     & 0.135  \\
+        \rowcolor{lightgray!50}
+        {Between Tools} & FSL vs. SPM        &  1.282       & 0.525      & 0.443     & 0.344  & 0.366       & 0.293     \\
+        \rowcolor{lightgray!50}
+        {(BT)} & FSL vs. AFNI                &  1.548       & 0.616      & 0.547     & 0.441  & 0.439       & 0.352     \\
+        \rowcolor{lightgray!50} 
+        {} & AFNI vs. SPM                    &  1.475       & 0.672      & 0.608     & 0.477  & 0.491       & 0.381     \\
+        {Within Tool} & FSL                  &  0.354       & 0.491      & 0.082     & 0.065  & 0.077       & 0.054     \\
+        {(WT)}   & SPM                       &  0.252       & 0.448      & 0.054     & 0.045  & 0.048       & 0.037     \\
+        {}   & AFNI                          &  0.434       & 0.524      & 0.128     & 0.135  & 0.108       & 0.131     \\
         \bottomrule
     \end{tabular}
     \caption{Voxel-wise mean and standard deviation of BT and WT variability
-    in group-level t-statistics maps.}
+    in group and subject t-statistics maps. \tristan{add stats on subject-level thresholded maps}}
     \label{table:pipeline-stats}
 \end{table}
 
-
-% \subsection{Variability of unthresholded statistical maps}
-
-Figure~\ref{fig:unthresh-maps} compares BT and WT variability in
-unthresholded maps. WT variability remains lower than BT variability
-overall. Moreover, BT and WT variability appeared moderately correlated (R
-in [0.56, 0.58], p=0.0). The set of voxels exhibiting comparable BT and
-WT values (located around the identity line in the XY plot) does not seem to have 
-any spatial consistency.
-
-%%%%%%%%%% Var. of Unthresh %%%%%%%%
 \begin{figure*}[ht]
-    \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
-      \begin{subfigure}[ht]{\textwidth}
+  \centering
+    % \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
+      \begin{subfigure}[ht]{0.9\textwidth}
       \centering
-      \includegraphics[width=\textwidth]{figures/std/gl-unthresh.png}
+      \includegraphics[width=0.9\textwidth]{figures/std/gl-unthresh.png}
       %\caption{Standard deviation of thresholded t-statistics map on template surface}
       \end{subfigure}
       \hfill
-      \begin{subfigure}[ht]{\textwidth}
+      \begin{subfigure}[ht]{0.9\textwidth}
         \centering
         \includegraphics[width=.9\textwidth]{figures/std-corr-unthresh-plot.png}
         %\caption{Standard deviation of thresholded t-statistics map on template surface}
       \end{subfigure}
-
-    \caption{Unthresholded group-level variability computed between tools (\textbf{A}) and within tools (\textbf{B}),
-    and difference between them (\textbf{C}).}
+    \caption{Unthresholded group-level variability computed between tools
+    (\textbf{A}), within tools at machine error (\textbf{B}), difference
+    between them (\textbf{C}), and voxel-wise comparison (\textbf{D}). }
     \label{fig:unthresh-maps}
-    \end{minipage}}
+    % \end{minipage}}
   \end{figure*}
 
-  \subsection{Subject-level unthresholded maps}
+  \subsection{In subject analyses, machine error approached BT variability in some regions}
 
-  Summary statistics for subject-level unthresholded t-statistics maps are
-  reported in Table~\ref{table:unthresh-maps-subjects}. As for group-level
+  Table~\ref{table:pipeline-stats} also reports on summary statistics for subject-level unthresholded t-statistics maps. As for group-level
   maps, BT variability was consistently larger than WT variability (Wilcoxon
   signed-rank test p~\textless~$10^{-160}$ for all tests, t-test p=0 for all
-  tests). 
-
-  Figure~\ref{fig:unthresh-maps-sbj} shows BT and WT variability for
-  the subject with the highest WT variability among the 16 subjects. For
-  this particular subject, WT variability approaches and even surpasses BT
-  variability in some regions. Besides, numerical variability appears focal.
-
-  As for the group maps, BT and WT variability appeared moderately
-  correlated for all subjects (Figure~\ref{fig:unthresh-correlation-allsbj}, 
-  R in [0.442, 0.612], p=0.0 for all
-  subjects).
-
-  %%%%%%%%%% Summary of statstics %%%%%%%%
-\setlength{\tabcolsep}{5pt}
-\begin{table}[h]
-    \centering
-    \begin{tabular}{cccc}
-        \toprule
-        \multirow{2}{*}{}& {} & \multicolumn{2}{c}{Unthresholded} \\
-        \cmidrule{3-4} \\
-        {} & {} & Mean & Std. dev. \\
-        \midrule
-        \rowcolor{lightgray}
-        {Between Tools} & FSL vs. SPM        &  0.366       & 0.293     \\
-        \rowcolor{lightgray}
-        {(BT)} & FSL vs. AFNI                &  0.439       & 0.352     \\
-        \rowcolor{lightgray}
-        {} & AFNI vs. SPM                    &  0.491       & 0.381     \\
-        {Within Tool} & FSL                  &  0.077       & 0.054     \\
-        {(WT)}   & SPM                       &  0.048       & 0.037     \\
-        {}   & AFNI                          &  0.108       & 0.131     \\
-        \bottomrule
-    \end{tabular} 
-    \caption{Voxel-wise mean and standard deviation of BT and WT variability
-    in subject-level t-statistics maps (averages on 16 subjects).}
-    \label{table:unthresh-maps-subjects}
-\end{table}
-
+  tests). However, for some subjects, machine error (WT variability) approached and even 
+  surpassed BT in some regions (Figure~\ref{fig:unthresh-maps-sbj}).  As for the group maps, BT and WT variability appeared moderately
+  correlated for all subjects (R in [0.442, 0.612], p=0.0 for all
+  subjects, Appendix~\ref{sec:supp-subjects}).  
 
   %%%%%%%%%% Var. of Unthresh sbj05%%%%%%%%
 \begin{figure*}[ht]
-  \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
     \centering
-    \includegraphics[width=\textwidth]{figures/std/sbj05-std.png}
+    \includegraphics[width=0.9\textwidth]{figures/std/sbj05-std.png}
     %\caption{Standard deviation of thresholded t-statistics map on template surface}
-    \caption{For subject with highest WT variability, unthresholded subject-level variability computed between tools (\textbf{A}) and within tools (\textbf{B}), and difference between them (\textbf{C}).}
+    \caption{For subject with highest WT variability,
+    unthresholded subject-level variability computed between tools (\textbf{A}), within tools at machine error (\textbf{B}),
+     and difference between them (\textbf{C}).}
   \label{fig:unthresh-maps-sbj}
-  \end{minipage}}
 \end{figure*}
 
+\subsection{At the precision t=17~bits, numerical variability approached BT variability in group analysis}
 
-
-
-\subsection{Group-level untresholded maps at different virtual precisions}
-
-While the previous results were obtained for machine error, we also evaluated numerical variability across different virtual precisions for FSL.
-Figure~\ref{fig:across-precisions} shows the root-mean-square error (RMSE) between BT and WT variability maps.
-The virtual precision of t=17 bits minimized the RMSE between BT and WT.
-Figure~\ref{fig:gnp-mni} shows the corresponding BT and WT maps obtained at t=17 bits, showing 
-that BT and WT reach comparable magnitudes in some regions.
-
-  %%%%%%%%%% plot different precisions%%%%%%%%
-  \begin{figure}[ht]
-    \fbox{\begin{minipage}{\dimexpr \columnwidth-2\fboxsep-2\fboxrule}
-        \centering
-        \includegraphics[width=\columnwidth]{figures/rmse-precisions.png}
-        %\caption{Standard deviation of thresholded t-statistics map on template surface}
-      \caption{Voxel-wise RMSE between BT and WT variability maps for different virtual precisions.}
-    \label{fig:across-precisions}
-    \end{minipage}}
-  \end{figure}
-
+While the previous results were obtained for machine error, we also
+evaluated numerical variability across different virtual precisions for FSL
+and found that the virtual precision of t=17 bits minimized the RMSE
+between BT and WT in unthresholded group maps. Figure~\ref{fig:gnp-mni} shows BT
+and WT in the corresponding group maps obtained at t=17 bits, showing that
+BT and WT reach comparable magnitudes in some regions. BT and WT remained
+moderately correlated at this precision. \tristan{In the text, add statistics similar to Table 2.}
   
   %%%%%%%%%% plot different precisions%%%%%%%%
   \begin{figure*}[ht]
-    \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
       \begin{subfigure}[ht]{\textwidth}
         \centering
         \includegraphics[width=.75\textwidth]{figures/bg_global_precision.pdf}
@@ -501,27 +426,30 @@ that BT and WT reach comparable magnitudes in some regions.
           %\caption{Standard deviation of thresholded t-statistics map on template surface}
         \end{subfigure}
         %\caption{Standard deviation of thresholded t-statistics map on template surface}
-        \caption{Unthresholded group t-statistics standard deviations computed between tools (\textbf{A}) and within tools (\textbf{B}), and difference between them (\textbf{C}).
-        WT is computed at the virtual precision of t=17 bits.}
+        \caption{Unthresholded group t-statistics standard deviations computed between tools (\textbf{A}),
+          within tools at the virtual precision of t=17~bits (\textbf{B}), difference between them (\textbf{C}), and 
+          voxel-wise comparison (\textbf{D}).}
     \label{fig:gnp-mni}
-    \end{minipage}}
   \end{figure*}
 
 
-  \subsection{Group-level thresholded maps}
+  \subsection{Previous results are confirmed in thresholded group maps}
 
-  Figure~\ref{fig:thresh-maps} compares BT and WT for thresholded group-level maps.
-  While BT is consistently larger than machine error, thresholding is an unstable operation 
-  that results in comparable magnitudes for BT and WT within activation clusters where BT variability is low. 
+  Figure~\ref{fig:thresh-maps}-\textbf{A},\textbf{B},\textbf{C} compares BT
+  and WT for thresholded group maps. Thresholding is an unstable operation
+  that introduced high variability for both BT and WT at the edges of
+  active regions. Except in these regions, BT remained consistently larger
+  than WT. To measure a potential association between BT and WT, we
+  measured WT instability and BT instability in each region of the
+  HCP-MMP1.0 parcellation. The confusion matrices in
+  Figure~\ref{fig:thresh-maps}-\textbf{D} report on such instabilities for
+  the 360 tested regions. The average ratio of unstable regions was 26\%
+  for BT and 9.2\% for WT, which confirmed that BT variability was larger than machine error.
+  The average Cohen's kappa score between WT instability and BT instability was $\kappa=0.17$, indicating 
+  a moderate agreement between WT instability and BT instability (-1 \textless $\kappa$ \textless 1, $\kappa$\leq 0 denotes chance agreement).
 
-  Figure~\ref{fig:cm-thresh} compares regional activation instability for BT and WT. The average ratio
-  of unstable regions was 26\% for BT and 9.2\% for WT. The average F1 score in these confusion matrics was 0.28. Regional 
-  WT instability appears to moderately explain BT regional BT instability.
-  
-  
   %%%%%%%%%% Var. of Thresh %%%%%%%%
   \begin{figure*}[ht]
-      \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
         \begin{subfigure}[ht]{\textwidth}
           \centering
           \includegraphics[width=\textwidth]{figures/std/gl-thresh.png}
@@ -539,13 +467,12 @@ that BT and WT reach comparable magnitudes in some regions.
       (\textbf{B}). The confusion matrices of activation instability
       in BT and WT among the 360 regions from the HCP-MMP1.0 parcellation is represented in the bottom row.}
       \label{fig:thresh-maps}
-      \end{minipage}}
     \end{figure*}
   
 
 \section{Discussion}
 
-In fMRI \emph{group analyses}, machine error remains an order of magnitude
+In fMRI group analyses, machine error remains an order of magnitude
 smaller than between-tool variability. Group analyses have a regularization
 effect toward numerical noise, which is expected to amplify as sample size
 increases. Therefore, for fMRI studies with large sample sizes, machine
@@ -561,7 +488,7 @@ triggered by machine error in 9\% of 360 brain regions, which indicates
 that machine error might have impacted neuroscientific conclusions related
 to these regions. 
 
-In \emph{subject analyses}, machine error and between-tool variabilty can
+In subject analyses, machine error and between-tool variabilty can
 become comparable for some subjects in some regions. This observation is particularly
 relevant to the development of fMRI-based biomarkers aiming at
 individualized phenotype predictions. Machine error is expected to play
@@ -591,35 +518,56 @@ perturbations might improve stability, as explored in~\cite{kiar2021data}.
 Finally, pipeline-specific statistical corrections might be envisaged to
 account for numerical variability.
 
-\appendix
-
-\begin{figure*}[ht]
-  \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
-  \centering
-  \includegraphics[width=\textwidth]{figures/replication-diffs.png}
-  \caption{Differences between replicated and original results obtained in~\cite{bowring2019exploring} 
-  of unthresholded group-level t-statistics for SPM (left) and AFNI (right).}
-  \label{fig:replication-diff}
-\end{minipage}}
-\end{figure*}
-
-\begin{figure*}[ht]
-  \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
-    \begin{subfigure}[ht]{\textwidth}
-      \centering
-      \includegraphics[width=.6\textwidth]{figures/sbj-std-corr-unthresh-plot.png}
-      %\caption{Standard deviation of thresholded t-statistics map on template surface}
-    \end{subfigure}
-    \caption{Voxel-wise comparison of BT and WT variabilty for 16 subjects.}
-  \label{fig:unthresh-correlation-allsbj}
-  \end{minipage}}
-\end{figure*}
-
-% No conclusion on which tool is more/less stable. 
-
 \bibliographystyle{plain}
 \bibliography{biblio}
 
+\clearpage
+
+\setcounter{equation}{0}
+\setcounter{figure}{0}
+\setcounter{table}{0}
+\setcounter{section}{0}
+
+\makeatletter
+\renewcommand{\theequation}{S\arabic{equation}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\thesection}{S\arabic{section}}
+
+\textbf{\centering \Large Supplemental Materials}
+
+\section{Reproduced results}
+\label{sec:supp-repro}
+
+Figure~\ref{fig:replication-diff} shows the difference in SPM and AFNI
+group analyses maps between the results in~\cite{bowring2019exploring} and
+our replication. Numerical perturbations of 1 ulp are likely to have been
+introduced by our replication due to the use of Octave vs MATLAB for SPM
+and multithreading for AFNI. However, the group maps remained very similar
+overall, which led us to conclude that our results correctly reproduced 
+the ones in~\cite{bowring2019exploring}.
+\begin{figure*}[ht]
+  % \fbox{\begin{minipage}{\dimexpr \textwidth-2\fboxsep-2\fboxrule}
+  % \centering
+  \includegraphics[width=\textwidth]{figures/replication-diffs.png}
+  \caption{Differences between reproduced and original results obtained in~\cite{bowring2019exploring} 
+  of unthresholded group-level t-statistics for SPM (left) and AFNI (right).}
+  \label{fig:replication-diff}
+% \end{minipage}}
+\end{figure*}
+
+\section{BT and WT correlations for all subjects}
+\label{sec:supp-subjects}
+
+Figure~\ref{fig:unthresh-correlation-allsbj} plots the relationship between
+WT and BT for each subject, showing a consistent moderate correlation between BT and
+WT.
+
+\begin{figure*}[ht]
+      \centering
+      \includegraphics[width=.6\textwidth]{figures/sbj-std-corr-unthresh-plot.png}
+      \caption{Relationship between BT and WT variabilty for 16 subjects.}
+  \label{fig:unthresh-correlation-allsbj}
+\end{figure*}
 
 \end{document}
 \endinput
