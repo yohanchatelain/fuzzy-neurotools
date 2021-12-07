@@ -44,9 +44,10 @@
 \newcommand{\tristan}[1]{\color{orange}\textbf{From Tristan:} #1\color{black}\xspace}
 \newcommand{\ali}[2]{\color{green}\textbf{Ali:} #1\color{black}\xspace}
 \newcommand{\discuss}[1]{\uwave{#1}}
+\newcommand{\gk}[1]{\color{purple}#1 \textbf{-GK}\color{black}\xspace}
 
 
-\title{Software variability in fMRI analysis:\\ comparing between-tool and numerical errors}
+\title{Comparing variability across fMRI analysis software packages and numerical errors}
 
 \author{Ali Salari$^1$, Yohan Chatelain$^1$, Alexander Bowring$^2$, Camille Maumet$^3$, Gregory Kiar$^4$, Tristan Glatard$^1$\\
 \vspace*{0.1cm}\\
@@ -58,21 +59,21 @@ $^4$ Center for the Developing Brain, Child Mind Institute, New York, NY, USA}
 \maketitle
 \begin{abstract}
 
-Software variability broadly affects functional MRI analyses due to
-differences among analytical tools as well as numerical instabilities. However,
-the extent to which numerical and between-tool variabilities compare for a
+Variability has been broadly observed in functional MRI analyses across both
+differences in analytic tools and numerical instabilities. However,
+the relationship between numerical (within-tool) and between-tool variabilities for
 given analysis is unclear. We extended a previous comparison
-between fMRI analysis tools FSL, AFNI, and SPM, to measure numerical
-variability through Monte-Carlo arithmetic. We found that, in group analyses,
-between-tool variability was consistently larger than machine error,
-whereas in subject analyses, machine error approached between-tool
-variability in some cases. Furthermore, between-tool variability and
-machine error appeared moderately correlated in all tested conditions.
-Finally, we also found that numerical error at the precision of 17 bits --- a
-precision level found in commonly-used libraries --- had effects of similar
-magnitude \tristan{check that} than those of between-tool variability. Our findings motivate the
+of fMRI analysis software libraries (namely FSL, AFNI, and SPM) and relate the observed differences to the numerical
+variability observed using Monte-Carlo arithmetic. We found that
+between-tool variability was consistently larger than numerical variability in group-level analyses,
+whereas numerical variability approached between-tool variability in some subject-level analyses.
+Interestingly, between-tool variability and
+machine error appeared moderately correlated ($r > 0.5$) in all tested conditions.
+Finally, we found that numerical variability had effects of similar magnitude to between-tool
+variability when errors were introduced at the precision of 17 bits --- a
+precision level found in commonly-used libraries \gk{What does this mean? They only have precision of 17, or they use data that is 17 bits?}. Our findings motivate the
 continued investigation of numerical instability in neuroimaging, and position it 
-as a possible proxy for between-tool variations.
+as a possible proxy for studying arbitrary between-tool variations.
 \end{abstract}
 
 \section{Introduction}
@@ -81,17 +82,17 @@ Software variability has been highlighted as an important source of error
 in fMRI analysis, originating from mainly two factors: between-tool
 variability denotes differences in the outcomes of different
 software toolboxes --- such as FSL, AFNI and SPM --- when analyzing the same dataset
-using similar methods. Numerical variability, in contrast, denotes
+using similar methods \gk{this sentence says "two factors" but then only mentioned between tool. Also, it is too long}. Numerical variability, in contrast, denotes
 differences in outcomes of the same analytical toolbox
 executed in different environments – such as different operating systems or
-different hardware platforms. This manuscript investigates the extent to
+different hardware platforms \gk{you mention these two examples of numerical variability, but you use neither in this paper. Why not mention the one you use?}. This manuscript investigates the extent to
 which both types of variability relate to each other.
 
 Numerical variability stems from errors introduced in floating point
-computations by numerical rounding, cancellation and absorption~\cite{muller2018handbook}. In
+computations by numerical rounding, cancellation, and absorption~\cite{muller2018handbook} \gk{only? What about poor conditioning + random effects + noise in data?}. In
 practice, the occurrence of such errors is affected by variations in
 hardware, software dependencies, compilation, parallelization, and most
-likely other factors. In general, the magnitude of such errors and their
+likely other factors \gk{what does "most likely other factors" mean?}. In the best case, the impact of such errors and the induced
 variations is in the range of 1 unit in the last place (ulp) --- also known
 as machine error, the difference between two successive floating-point
 numbers. However, when computations depend on imprecise libraries,
@@ -99,17 +100,17 @@ numerical error may vary by several ulps. For instance, the numerical error
 of the complementary error function (erfc) is larger than 3 ulps in several
 mathematical libraries~\cite{zimmermann:hal-03141101}, implying that an update of this function could introduce
 numerical perturbations larger than 3 ulps. Due to numerical instability,
-machine error may amplify during its propagation through the analysis,
-resulting in considerable loss of precision in final results. For instance, in fMRI,
-numerical variability produced by Linux updates was shown to result in Dice
+machine error may amplify during its propagation through analyses,
+resulting in considerable loss of precision in final results. In fMRI analysis,
+numerical variability produced by Linux updates has been shown to result in Dice
 coefficients ranging from 0.0 to 1.0 for ICA components produced by FSL
-MELODIC~\cite{Glatard2015}.
+MELODIC~\cite{Glatard2015} \gk{there isn't really context for what this result means, yet. Is this a lot? Dice hasn't been explained. Also, how are ICA components (weighted vectors) compared via Dice (a measure for binary image/vector comparison)? }.
 
 Between-tool variability is not a surprising concept: different programs
-executed on the same data may obviously produce different results. However,
+executed on the same data may obviously produce different results \gk{even when doing conceptually the same thing? Why? Why is this obvious?}. However,
 in fMRI analysis, programs all aim to estimate brain activity from measured
 variations in the BOLD signal, which is not expected to be measurably
-impacted by computational artifacts. Therefore, the observation reported
+impacted by computational artifacts \gk{Why wouldn't it be? Especially if you state that it isn't surprising for tools to lead to different results, how come you expect fMRI to not suffer from this?}. Therefore, the observation reported
 in~\cite{bowring2019exploring} that the three main fMRI analysis toolboxes
 may result in marked analytical differences (Dice coefficients ranging from
 0.000 to 0.684 for thresholded activation maps), has raised substantial
@@ -117,22 +118,21 @@ concern. In a follow-up study~\cite{bowring2021isolating}, the same authors
 isolated the analytical components where the pipelines diverge,
 highlighting a major impact of the signal model and suggesting that the
 root-cause for between-tool variability depends on the analysis design and
-task paradigm. Further, the work in~\cite{Li2021.12.01.470790} found
+task paradigm \gk{If you state this finding, you need to unpack what it means a little bit. What part of analysis design? By task paradigm do you essentially mean the expected effect-size for the task that individuals are performing within the scanner?}. Further, the work in~\cite{Li2021.12.01.470790} found
 moderate agreement between results produced by five independent fMRI
 analysis pipelines and analyzed in details the components that led to these
-variations. Between-tool variability is supposedly an important determinant
+variations \gk{This sentence feels inconsistent and counter to the previous, and also doesn't tell us their findings; what components led to variations?}. Between-tool variability is supposedly an important determinant
 of the substantial analytical variability recently observed in
-fMRI~\cite{botvinik2020variability}.
+fMRI~\cite{botvinik2020variability} \gk{arguably, one of the larger issues that the NARPS result showed us was that people construct and test ``equivalent'' hypotheses differently, so despite highly similar data they will arrive at different conclusions}.
 
 We investigate the relationship between numerical and between-tool
-variability through two main questions: (1) how do both types of
-variability compare in magnitude, and (2) is there an association between
-them. The first question determines the extent to which each variability
-source may impact current fMRI results, and which one should be addressed
+variability through two main questions: (1) what is the relative magnitude of
+within-tool (numerical) variability and between-tool variability, and (2) is there an association between within- and between-tool variability. The first question determines the extent to which each variability
+source may impact current fMRI results, and which one should be addressed or leveraged
 in priority. The second question may provide deeper insights on the origins
 of software variability. Conceptually, both types of variability may
 reflect a single solution space shaped by local minima and
-ill-conditioning, which could be explored through numerical or software
+ill-conditioning \gk{this feels a bit clumsily worded, but I don't immediately have a rewrite that comes to mind }, which could be explored through numerical or software
 perturbations.
 
 
@@ -242,7 +242,7 @@ addition between the original function output and the floating-point zero.
   basicstyle=\footnotesize\ttfamily,
   commentstyle=\itshape\color{purple!40!black},
 }
-\lstinputlisting[caption=Sample wrapper function (C code), label=algo:wrapper, style=customasm]{wrapper.c}
+\lstinputlisting[caption=Sample wrapper function (C code) \gk{I don't think we need this/it adds anything. Could go to a supplement if we want it in a paper somewhere}, label=algo:wrapper, style=customasm]{wrapper.c}
 
 In~\cite{salari2021accurate}, Fuzzy Libmath was shown to accurately
 simulate the effect of Linux operating system updates in structural
@@ -267,19 +267,19 @@ Fuzzy Libmath. Indeed, MATLAB uses its own built-in mathematical functions,
 which prevents the use of Fuzzy Libmath. In AFNI, we set the number of
 threads to 7 even though AFNI executions
 in~\cite{bowring2019exploring} were single-threaded. This was meant to
-reduce the time overhead resulting from Fuzzy Libmath instrumentation. All
+reduce the time overhead resulting from Fuzzy Libmath instrumentation \gk{Did we verify that single-threading generally didn't lead to different results than 7-threading? As in, were they all ostensibly sampled from the same random distribution?}. All
 the analyses were conducted on the CentOS 7.3 operating system. The
 computations were performed on \href{https://www.computecanada.ca}{Compute
 Canada's} Béluga cluster nodes, each with 2$\times$ Intel Gold 6148 Skylake~@~2.4~GHz
  (40 cores/node) CPU and 8~GB of RAM per core. To facilitate portability and reproducibility,
  we encapsulated the
-above-mentioned software packages in Docker container images based on CentOS 7.3.
+above-mentioned software packages in Docker\gk{CC doesn't support Docker, so you mean Singularity?} container images based on CentOS 7.3.
 
-We measured numerical (within-tool -- WT) variability by running the same analyses three
+We measured numerical (within-tool; WT) variability by running the same analyses three
 times using Fuzzy Libmath with a virtual precision of $t=53$~bits for
 double-precision values and $t=24$~bits for single-precision values. These
 values were chosen such that the numerical perturbation simulates machine
-error. The resulting samples are equally plausible estimates of
+error. The resulting samples were equally plausible estimates of
 the true numerical result at the precision used by the pipelines. Moreover, to evaluate numerical perturbations at different magnitudes, 
 we repeated the FSL analyses for virtual
 precisions ranging from $t=1$~bit to $t=24$~bits for single-precision
@@ -288,11 +288,11 @@ precisions ranging from $t=24$~bits to $t=53$~bits for double-precision values, 
 set the virtual precision to $t=24$~bits for single-precision values. 
 
 We evaluated WT and BT variability for thresholded as well as unthresholded
-group-level and subject-level t-statistics maps, by computing the
-standard deviation of t-statistic maps across pipelines (BT) or Fuzzy Libmath samples (WT). For BT, we computed the standard deviation 
+group-level and subject-level t-statistics maps by computing the
+standard deviation of t-statistic maps across pipelines or Fuzzy Libmath samples, respectively. For BT, we computed the standard deviation 
 across a given pair of tools.
 For WT, we computed the standard deviation across the three
-Fuzzy Libmath samples of a given tool. Moreover, we computed WT variability for a pair of tools (A, B) as follows:
+Fuzzy Libmath samples of a given tool. We computed WT variability for a pair of tools (A, B) as follows:
 \begin{equation}
   \sigma_{WT(A,B)}^2 = \sigma_{WT(A)}^2 + \sigma_{WT(B)}^2,
   \label{eq:wt-pair}
@@ -311,36 +311,36 @@ samples.
 
 \section{Results}
 The scripts, Docker images, and data to reproduce the results are available
-in out GitHub repository at
+in our GitHub repository at
 \url{https://github.com/big-data-lab-team/fuzzy-neurotools}.
 
 
-\subsection{Sanity check}
+\subsection{Validation of Replication}
 
 We verified the correctness of our analyses by comparing our unperturbed
 t-statistic group maps with the ones obtained
 in~\cite{bowring2019exploring}. For FSL, we found
-identical checksums. For SPM, the checksums were different but differences
+identical results. For SPM, the files (as measured by checksums) were different but differences
 were visually unnoticeable. For AFNI, the activation maps were similar
-overall, however, differences were more noticeable visually. 
-The observed differences remained small (see Supplemental Material~\ref{sec:supp-repro}) and might be due to the use of
-GNU/Octave vs MATLAB in SPM and of multithreading in AFNI. We performed visual quality control of the AFNI
+overall, however, differences were noticeable visually. 
+The observed differences remained small (see Supplemental Material~\ref{sec:supp-repro}), and might be due to the use of
+GNU/Octave vs MATLAB in SPM, and of multithreading in AFNI. We performed visual quality control of the AFNI
 and SPM results for each individual subject and confirmed that T1-weighted images were
 correctly skull-stripped and registered to the MNI template.
 
-\subsection{In the group analysis, BT variability was larger than and correlated with machine error}
+\subsection{In the group analysis, BT variability was larger than WT variability}
 
 Table~\ref{table:pipeline-stats} presents summary statistics for the
 group-level t-statistics. For each tool pair (A, B), BT variability was
 significantly larger than machine error in tool A or B, in both thresholded
-and unthresholded maps (Wilcoxon signed-rank test p~\textless~$10^{-162}$
-for all tests, t-test p=0 for all tests).
+and unthresholded maps (Wilcoxon signed-rank test p~\textless~$10^{-162}$ \gk{we don't have sufficient sample size to say that p is that small, so we should probably say less than $10^{-5}$ or something else we could actually arrive at with our number of repetitions, pipeline pairs, and samples.}
+for all tests, t-test p=0 \gk{similar comment re p value} for all tests).
 Figure~\ref{fig:unthresh-maps}-\textbf{A},\textbf{B},\textbf{C} shows that
 these global differences were confirmed regionally. 
 In addition, BT and WT variability appeared moderately correlated across voxels (Pearson's R
 in [0.56, 0.58], p=0.0, Figure~\ref{fig:unthresh-maps}-\textbf{D}). Interestingly, the correlation 
-was driven by a set of voxels exhibiting comparable BT and
-WT values (located around the identity line in the XY plot), which, however, did not seem to have 
+appears driven by a set of voxels exhibiting comparable BT and
+WT values located around the identity line in Figure~\ref{fig:unthresh-maps}D, which, however, did not seem to have 
 any spatial consistency \tristan{Ali, check for intensity differences between these voxels and the other ones}.
 
 
@@ -385,14 +385,14 @@ any spatial consistency \tristan{Ali, check for intensity differences between th
     % \end{minipage}}
   \end{figure*}
 
-  \subsection{In subject analyses, machine error approached BT variability in some regions}
+  \subsection{In subject analyses, WT variability approached BT variability in some regions}
 
   Table~\ref{table:pipeline-stats} also presents summary statistics for
   subject-level unthresholded t-statistics maps. As for group-level maps,
   BT variability was consistently larger than WT variability (Wilcoxon
-  signed-rank test p~\textless~$10^{-160}$ for all tests, t-test p=0 for
+  signed-rank test p~\textless~$10^{-160}$\gk{pval comment} for all tests, t-test p=0 for
   all tests). However, Figure~\ref{fig:unthresh-maps-sbj} shows that for
-  some subjects, machine error (WT variability) approached and even
+  some subjects, WT variability approached and even
   surpassed BT in some regions. As for the group maps, BT and WT
   variability appeared moderately correlated for all subjects (R in [0.442,
   0.612], p=0.0 for all subjects, see Supplemental Material~\ref{sec:supp-subjects}).
@@ -439,9 +439,9 @@ moderately correlated at this precision. \tristan{In the text, add statistics si
   and WT for thresholded group maps. Thresholding is an unstable operation
   that introduced variability at the edges of
   active regions for both BT and WT. Except in these regions, BT remained consistently larger
-  than WT. Moreover, to measure correlation between BT and WT, we
+  than WT \gk{what regions? This kind of came from nowhere}. Moreover, to measure correlation between BT and WT, we
   measured WT instability and BT instability in each region of the
-  HCP-MMP1.0 parcellation. The confusion matrices in
+  HCP-MMP1.0 parcellation \gk{again, it feels kind of abrupt and I'm not really sure what this section is getting at or how it differs from the previous based on these descriptions. Perhaps introduce that thresholding is common, but since it makes things discontinuous we study it through aparcellation, etc...}. The confusion matrices in
   Figure~\ref{fig:thresh-maps}-\textbf{D} report these instabilities for
   the 360 tested regions. The average ratio of unstable regions was 26\%
   for BT and 9.2\% for WT, which confirmed that BT variability was larger than machine error.
@@ -467,22 +467,21 @@ moderately correlated at this precision. \tristan{In the text, add statistics si
 
 \section{Discussion}
 
-In fMRI group analyses, machine error remains an order of magnitude smaller
-than between-tool variability. Group analyses have a regularization effect
-toward numerical noise, which is expected to amplify as sample size
-increases. Therefore, for fMRI studies with large sample sizes, machine
-error can safely be neglected with respect to between-tool variability. The
+In fMRI group analyses, within-tool variability remains an order of magnitude smaller
+than between-tool variability. Group analyses benefit from regularization
+of numerical noise, which is expected to increase as sample size
+increases. Therefore, for fMRI studies with large sample sizes, within-tool variability may be negligible with respect to between-tool variability. The
 recommendation made in~\cite{botvinik2020variability} to rely on
-``multiverse" analyses where multiple analysis tools are compared is
+``multiverse'' analyses where multiple analysis tools are compared is
 therefore likely to successfully correct for machine error in group
-studies. Nevertheless, machine error remains substantial in group analyses
+studies. Nevertheless, within-tool variability remains substantial in group analyses
 that are based on a single tool, as is commonly the case in current fMRI
 studies. In particular, in our study, the inherent instability of
 thresholding was triggered by machine error in 9\% of 360 brain regions,
 which indicates that machine error might have impacted neuroscientific
 conclusions related to these regions. 
 
-In subject analyses, machine error and between-tool variabilty can become
+In subject-level analyses, within-tool and between-tool variabilty can become
 of comparable magnitude for some subjects in some regions. This observation
 is particularly relevant to the development of fMRI-based biomarkers aiming
 at individualized phenotype predictions. Machine error is expected to play
@@ -491,14 +490,14 @@ results produced by multiple tools. The observed regularization effect of
 group analyses toward numerical noise is consistent with observations made
 in~\cite{kiar2020numerical} from diffusion MRI where connectome graph
 statistics were found to be substantially unstable at the subject-level
-while group distributions remained consistent. 
+while group distributions remained consistent. \gk{this last sentence feels like it belongs in the previous paragraph, right before mentioning thresholding}
 
-For both group and subject analyses, between-tool variability and machine
-error were found to be moderately correlated. Even though between-tool
-variability and numerical variability are different in nature, this result
+For both group- and subject-level analyses, between-tool variability and within-tool
+variability were found to be moderately correlated. Even though between-tool
+variability and within-tool  variability are different in nature, this result
 suggests that in some cases both sources of variability may have a common
 cause that might be related to the conditioning of the BOLD signal
-estimation problem in a specific dataset. Therefore, in some regions,
+estimation problem \gk{I wouldn't necessarily say it's because of "BOLD signal estimation problem", just "algorithms used to process"} in a specific dataset. Therefore, in some regions,
 instabilities of similar magnitude may be triggered by small numerical
 perturbations, model variations, or implementation differences. For
 instance, the analysis of datasets with high motion may be unstable both 
