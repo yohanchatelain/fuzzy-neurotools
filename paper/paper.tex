@@ -267,13 +267,17 @@ Fuzzy Libmath. Indeed, MATLAB uses its own built-in mathematical functions,
 which prevents the use of Fuzzy Libmath. In AFNI, we set the number of
 threads to 7 even though AFNI executions
 in~\cite{bowring2019exploring} were single-threaded. This was meant to
-reduce the time overhead resulting from Fuzzy Libmath instrumentation \gk{Did we verify that single-threading generally didn't lead to different results than 7-threading? As in, were they all ostensibly sampled from the same random distribution?}. All
-the analyses were conducted on the CentOS 7.3 operating system. The
+reduce the time overhead resulting from Fuzzy Libmath instrumentation 
+\gk{Did we verify that single-threading generally didn't lead to different results than 7-threading? As in, were they all ostensibly sampled from the same random distribution?}. 
+\ali{We verified that multithreading leads to different results (e.g. single-threading vs, 7-threading). 
+However, single-threaded executions couldn't reproduce the original results.}
+All the analyses were conducted on the CentOS 7.3 operating system. The
 computations were performed on \href{https://www.computecanada.ca}{Compute
 Canada's} Béluga cluster nodes, each with 2$\times$ Intel Gold 6148 Skylake~@~2.4~GHz
  (40 cores/node) CPU and 8~GB of RAM per core. To facilitate portability and reproducibility,
  we encapsulated the
-above-mentioned software packages in Docker\gk{CC doesn't support Docker, so you mean Singularity?} container images based on CentOS 7.3.
+above-mentioned software packages in Docker container images based on CentOS 7.3.
+Although, we converted Docker containers to Singularity images to enable running on cluster nodes.
 
 We measured numerical (within-tool; WT) variability by running the same analyses three
 times using Fuzzy Libmath with a virtual precision of $t=53$~bits for
@@ -333,15 +337,18 @@ correctly skull-stripped and registered to the MNI template.
 Table~\ref{table:pipeline-stats} presents summary statistics for the
 group-level t-statistics. For each tool pair (A, B), BT variability was
 significantly larger than machine error in tool A or B, in both thresholded
-and unthresholded maps (Wilcoxon signed-rank test p~\textless~$10^{-162}$ \gk{we don't have sufficient sample size to say that p is that small, so we should probably say less than $10^{-5}$ or something else we could actually arrive at with our number of repetitions, pipeline pairs, and samples.}
-for all tests, t-test p=0 \gk{similar comment re p value} for all tests).
+and unthresholded maps (Wilcoxon signed-rank test and t-test p~\textless~$10^{-5}$ for all tests).
+% \gk{we don't have sufficient sample size to say that p is that small,
+% so we should probably say less than $10^{-5}$ or something else we could actually
+% arrive at with our number of repetitions, pipeline pairs, and samples.}
+% for all tests, t-test p=0 \gk{similar comment re p value} for all tests).
 Figure~\ref{fig:unthresh-maps}-\textbf{A},\textbf{B},\textbf{C} shows that
 these global differences were confirmed regionally. 
 In addition, BT and WT variability appeared moderately correlated across voxels (Pearson's R
 in [0.56, 0.58], p=0.0, Figure~\ref{fig:unthresh-maps}-\textbf{D}). Interestingly, the correlation 
 appears driven by a set of voxels exhibiting comparable BT and
 WT values located around the identity line in Figure~\ref{fig:unthresh-maps}D, which, however, did not seem to have 
-any spatial consistency \tristan{Ali, check for intensity differences between these voxels and the other ones}.
+any spatial consistency.
 
 
 \setlength{\tabcolsep}{5pt}
@@ -366,7 +373,7 @@ any spatial consistency \tristan{Ali, check for intensity differences between th
         \bottomrule
     \end{tabular}
     \caption{Voxel-wise mean and standard deviation of BT and WT variability
-    in t-statistics maps. \tristan{add stats on subject-level thresholded maps}}
+    in t-statistics maps.}
     \label{table:pipeline-stats}
 \end{table}
 
@@ -390,8 +397,8 @@ any spatial consistency \tristan{Ali, check for intensity differences between th
   Table~\ref{table:pipeline-stats} also presents summary statistics for
   subject-level unthresholded t-statistics maps. As for group-level maps,
   BT variability was consistently larger than WT variability (Wilcoxon
-  signed-rank test p~\textless~$10^{-160}$\gk{pval comment} for all tests, t-test p=0 for
-  all tests). However, Figure~\ref{fig:unthresh-maps-sbj} shows that for
+  signed-rank test and t-test p~\textless~$10^{-5}$ for all tests).
+  However, Figure~\ref{fig:unthresh-maps-sbj} shows that for
   some subjects, WT variability approached and even
   surpassed BT in some regions. As for the group maps, BT and WT
   variability appeared moderately correlated for all subjects (R in [0.442,
@@ -413,10 +420,15 @@ any spatial consistency \tristan{Ali, check for intensity differences between th
 While the previous results were obtained for machine error, we also
 evaluated numerical variability across different virtual precisions for FSL
 and found that the virtual precision of t=17 bits minimized the RMSE
-between BT and WT in unthresholded group maps. Figure~\ref{fig:gnp-mni} shows BT
+between BT and WT in unthresholded group maps.
+FSL produced group maps with $\mu=0.325$ and $\sigma=0.287$ at this virtual precision,
+which indicates a bit lower variability compared to BT variability
+(Wilcoxon signed-rank test and t-test p~\textless~$10^{-5}$ for all tests).
+Figure~\ref{fig:gnp-mni} shows BT
 and WT in the corresponding group maps obtained at t=17 bits, showing that
 BT and WT reach comparable magnitudes in some regions. BT and WT remained
-moderately correlated at this precision. \tristan{In the text, add statistics similar to Table 2: is BT still larger than WT here?}
+moderately correlated at this precision. 
+
   
   %%%%%%%%%% plot different precisions%%%%%%%%
   \begin{figure*}[ht]
